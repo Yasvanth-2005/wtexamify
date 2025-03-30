@@ -17,6 +17,111 @@ import (
 
 var answerSheetCollection *mongo.Collection = config.GetCollection(config.Client, "answersheets")
 
+// func CreateAnswerSheet(c *gin.Context) {
+// 	studentName, _ := c.Get("name")
+// 	studentEmail, _ := c.Get("email")
+// 	containerID, _ := c.Get("container_id")
+
+// 	var request struct {
+// 		ExamID string `json:"exam_id"`
+// 	}
+// 	if err := c.ShouldBindJSON(&request); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
+// 		return
+// 	}
+
+// 	examID, err := primitive.ObjectIDFromHex(request.ExamID)
+// 	if err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid exam ID"})
+// 		return
+// 	}
+
+// 	// Check if an answer sheet already exists for this student and exam
+// 	var existingAnswerSheet models.AnswerSheet
+// 	err = answerSheetCollection.FindOne(context.TODO(), bson.M{"exam_id": examID, "student_email": studentEmail}).Decode(&existingAnswerSheet)
+// 	if err == nil {
+// 		c.JSON(http.StatusOK, gin.H{"message": "Answer sheet already exists", "answerSheet": existingAnswerSheet})
+// 		return
+// 	}
+
+// 	// Fetch the exam data
+// 	var exam models.Exam
+// 	err = examCollection.FindOne(context.TODO(), bson.M{"_id": examID}).Decode(&exam)
+// 	if err != nil {
+// 		c.JSON(http.StatusNotFound, gin.H{"error": "Exam not found"})
+// 		return
+// 	}
+
+// 	// Validate if there are question sets available
+// 	if len(exam.Sets) == 0 {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "No question sets available for this exam"})
+// 		return
+// 	}
+
+// 	// Select a random question set
+// 	rand.Seed(time.Now().UnixNano())
+// 	selectedSetID := exam.Sets[rand.Intn(len(exam.Sets))]
+
+// 	var questionSet models.QuestionSet
+// 	err = questionSetCollection.FindOne(context.TODO(), bson.M{"_id": selectedSetID}).Decode(&questionSet)
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch question set"})
+// 		return
+// 	}
+
+// 	data := make([]map[string]string, len(questionSet.Questions))
+// 	for i, q := range questionSet.Questions {
+// 		data[i] = map[string]string{q: ""}
+// 	}
+
+// 	answerSheetID := primitive.NewObjectID()
+// 	answerSheet := models.AnswerSheet{
+// 		ID:           answerSheetID,
+// 		ExamID:       examID,
+// 		ExamType:     exam.ExamType,
+// 		Duration:     exam.Duration,
+// 		SetNumber:    questionSet.SetNumber,
+// 		StudentName:  studentName.(string),
+// 		StudentEmail: studentEmail.(string),
+// 		Data:         data,
+// 		Copied:       false,
+// 		CopyCount:    0,
+// 		SubmitStatus: false,
+// 		CreatedAt:    primitive.NewDateTimeFromTime(time.Now()),
+// 	}
+
+// 	_, err = answerSheetCollection.InsertOne(context.TODO(), answerSheet)
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create answer sheet"})
+// 		return
+// 	}
+
+// 	// Update Student Container with examId and answerSheetId
+// 	studentContainerID, ok := containerID.(primitive.ObjectID)
+// 	if ok {
+// 		update := bson.M{
+// 			"$push": bson.M{
+// 				"question_papers": bson.M{
+// 					"exam_id":         examID,
+// 					"answer_sheet_id": answerSheetID,
+// 					"copied":          false,
+// 				},
+// 			},
+// 		}
+
+// 		_, err = studentContainerCollection.UpdateOne(context.TODO(), bson.M{"_id": studentContainerID}, update)
+// 		if err != nil {
+// 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update student container"})
+// 			return
+// 		}
+// 	}
+
+// 	c.JSON(http.StatusOK, gin.H{
+// 		"message":     "Answer sheet created successfully",
+// 		"answerSheet": answerSheet,
+// 	})
+// }
+
 func CreateAnswerSheet(c *gin.Context) {
 	studentName, _ := c.Get("name")
 	studentEmail, _ := c.Get("email")
@@ -58,12 +163,56 @@ func CreateAnswerSheet(c *gin.Context) {
 		return
 	}
 
-	// Select a random question set
-	rand.Seed(time.Now().UnixNano())
-	selectedSetID := exam.Sets[rand.Intn(len(exam.Sets))]
+	// Fetch all existing answer sheets for this exam
+	var answerSheets []models.AnswerSheet
+	cursor, err := answerSheetCollection.Find(context.TODO(), bson.M{"exam_id": examID})
+	if err == nil {
+		defer cursor.Close(context.TODO())
+		cursor.All(context.TODO(), &answerSheets)
+	}
 
+	// Count how many times each set number has been assigned
+	setNumberCount := make(map[int]int)
+	for _, sheet := range answerSheets {
+		setNumberCount[sheet.SetNumber]++
+	}
+
+	// Fetch the set numbers from the question sets
+	var questionSets []models.QuestionSet
+	cursor, err = questionSetCollection.Find(context.TODO(), bson.M{"exam_id": examID})
+	if err == nil {
+		defer cursor.Close(context.TODO())
+		cursor.All(context.TODO(), &questionSets)
+	}
+
+	// Find the least assigned set number
+	var selectedSetNumber int
+	setAssigned := make(map[int]bool)
+	for _, qs := range questionSets {
+		setAssigned[qs.SetNumber] = false
+	}
+
+	for _, sheet := range answerSheets {
+		setAssigned[sheet.SetNumber] = true
+	}
+
+	// Assign an unassigned set first
+	for _, qs := range questionSets {
+		if !setAssigned[qs.SetNumber] {
+			selectedSetNumber = qs.SetNumber
+			break
+		}
+	}
+
+	// If all sets are assigned, pick a random one
+	if selectedSetNumber == 0 {
+		rand.Seed(time.Now().UnixNano())
+		selectedSetNumber = questionSets[rand.Intn(len(questionSets))].SetNumber
+	}
+
+	// Fetch the selected question set
 	var questionSet models.QuestionSet
-	err = questionSetCollection.FindOne(context.TODO(), bson.M{"_id": selectedSetID}).Decode(&questionSet)
+	err = questionSetCollection.FindOne(context.TODO(), bson.M{"exam_id": examID, "set_number": selectedSetNumber}).Decode(&questionSet)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch question set"})
 		return
