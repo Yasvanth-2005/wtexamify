@@ -549,7 +549,7 @@ const TeacherPanel = () => {
                       className="bg-gray-700 rounded-lg p-4"
                     >
                       <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-medium text-white">Set {set.set_number}/{questionSets.length}</h3>
+                        <h3 className="text-lg font-medium text-white">Set {set.set_number} / {questionSets.length}</h3>
                         <span className="px-2 py-1 text-sm rounded-full bg-blue-500/20 text-blue-400">
                           {set.exam_type}
                         </span>
