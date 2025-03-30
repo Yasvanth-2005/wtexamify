@@ -13,6 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var answerSheetCollection *mongo.Collection = config.GetCollection(config.Client, "answersheets")
@@ -487,12 +488,13 @@ func GetAllSubmittedAnswerSheets(c *gin.Context) {
 		return
 	}
 
-	// Find submitted answer sheets
+	// Find submitted answer sheets and sort by StudentEmail in ascending order
 	var answerSheets []models.AnswerSheet
+	opts := options.Find().SetSort(bson.D{{"student_email", 1}}) // Sort in ascending order
 	cursor, err := answerSheetCollection.Find(context.TODO(), bson.M{
 		"exam_id":       examID,
 		"submit_status": true, // Only fetch submitted answer sheets
-	})
+	}, opts)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch answer sheets"})
 		return
@@ -505,6 +507,7 @@ func GetAllSubmittedAnswerSheets(c *gin.Context) {
 		return
 	}
 
+	// Send sorted answer sheets
 	c.JSON(http.StatusOK, gin.H{"submitted_answersheets": answerSheets})
 }
 

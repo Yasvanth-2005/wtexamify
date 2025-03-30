@@ -81,7 +81,9 @@ func GoogleCallback(c *gin.Context) {
 
 	role := "teacher"
 	if strings.HasSuffix(email, "@rguktn.ac.in") {
-		role = "student"
+		if !strings.HasPrefix(email, "n2") {
+			role = "student"
+		}
 	}
 
 	var user models.User
