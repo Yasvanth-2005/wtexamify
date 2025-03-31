@@ -440,7 +440,7 @@ const ExamSession = () => {
                     onChange={(value) => {
                       setAnswers((prev) => ({ ...prev, [currentQuestion]: value }));
                     }}
-                    className="w-full border border-gray-600 rounded-lg"
+                    className="w-full h-64 border border-gray-600 rounded-lg overflow-hidden"
                     basicSetup={{
                       lineNumbers: true,
                       highlightActiveLineGutter: true,
