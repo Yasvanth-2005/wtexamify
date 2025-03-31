@@ -3,9 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { RefreshCw, Brain } from 'lucide-react';
 import Allapi from '../utils/common';
-import { Controlled as CodeMirror } from "@uiw/react-codemirror";
-import { javascript } from "@codemirror/lang-javascript";
-import { dracula } from "@uiw/codemirror-theme-dracula";
+import CodeMirror from '@uiw/react-codemirror';
+import { javascript } from '@codemirror/lang-javascript';
+import { dracula } from '@uiw/codemirror-theme-dracula';
 
 const ExamSession = () => {
   const { id: answerSheetId } = useParams();
