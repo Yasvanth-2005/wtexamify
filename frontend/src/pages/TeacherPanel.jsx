@@ -156,6 +156,15 @@ const TeacherPanel = () => {
     }
   };
 
+  const escapeHTML = (str) => {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  };
+  
   const generatePrintContent = (answerSheet) => {
     return `
       <div class="answer-sheet" style="page-break-after: always;">
@@ -173,8 +182,10 @@ const TeacherPanel = () => {
               <h3>Question ${index + 1}:</h3>
               <p>${question}</p>
               <div class="answer" style="margin-left: 20px; color: #444;">
-                <strong>Answer:</strong><br>
-                ${answer || 'No answer provided'}
+                <strong>Answer:</strong>
+                <pre style="white-space: pre-wrap; word-wrap: break-word; background: #f4f4f4; padding: 10px; border-radius: 5px;">
+                  ${escapeHTML(answer) || 'No answer provided'}
+                </pre>
               </div>
             </div>
           `;
@@ -182,7 +193,6 @@ const TeacherPanel = () => {
       </div>
     `;
   };
-
   const downloadAllPDFs = async () => {
     try {
       setDownloadingAll(true);
