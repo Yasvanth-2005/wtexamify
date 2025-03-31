@@ -431,7 +431,7 @@ const ExamSession = () => {
                   className="w-full h-64 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
                   placeholder="Enter your answer..."
                 /> */}
-                    <div className="w-full h-64 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                    <div className="w-full overflow-hidden h-64 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
                     <CodeMirror
                       value={answers[currentQuestion] || ""}
                       height="100%" 
