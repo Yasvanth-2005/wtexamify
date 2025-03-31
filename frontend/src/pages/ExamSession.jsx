@@ -3,6 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { RefreshCw, Brain } from 'lucide-react';
 import Allapi from '../utils/common';
+import { Controlled as CodeMirror } from "@uiw/react-codemirror";
+import { javascript } from "@codemirror/lang-javascript";
+import { dracula } from "@uiw/codemirror-theme-dracula";
 
 const ExamSession = () => {
   const { id: answerSheetId } = useParams();
@@ -422,12 +425,24 @@ const ExamSession = () => {
               <div className="space-y-4">
                 <h3 className="text-lg text-white">Question {activeQuestionIndex + 1}</h3>
                 <p className="text-white">{currentQuestion}</p>
-                <textarea
+                {/* <textarea
                   value={answers[currentQuestion] || ''}
                   onChange={(e) => setAnswers(prev => ({ ...prev, [currentQuestion]: e.target.value }))}
                   className="w-full h-64 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
                   placeholder="Enter your answer..."
-                />
+                /> */}
+                    <div className="w-full h-64 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                    <CodeMirror
+                      value={answers[currentQuestion] || ""}
+                      height="100%" 
+                      theme={dracula}
+                      extensions={[javascript()]}
+                      onChange={(value) => {
+                        setAnswers((prev) => ({ ...prev, [currentQuestion]: value }));
+                      }}
+                      basicSetup={{ lineNumbers: true }}
+                    />
+                  </div>
               </div>
 
               {/* Navigation buttons */}
