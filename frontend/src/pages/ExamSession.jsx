@@ -431,43 +431,43 @@ const ExamSession = () => {
                   className="w-full h-64 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
                   placeholder="Enter your answer..."
                 /> */}
-                <div className="w-full border border-gray-600 rounded-lg overflow-hidden">
-                  <CodeMirror
-                    value={answers[currentQuestion] || ""}
-                    height="250px"
-                    theme={dracula}
-                    extensions={[javascript()]}
-                    onChange={(value) => {
-                      setAnswers((prev) => ({ ...prev, [currentQuestion]: value }));
-                    }}
-                    className="w-full h-64 border border-gray-600 rounded-lg overflow-hidden"
-                    basicSetup={{
-                      lineNumbers: true,
-                      highlightActiveLineGutter: true,
-                      highlightSpecialChars: true,
-                      foldGutter: true,
-                      drawSelection: true,
-                      dropCursor: true,
-                      allowMultipleSelections: true,
-                      indentOnInput: true,
-                      syntaxHighlighting: true,
-                      bracketMatching: true,
-                      closeBrackets: true,
-                      autocompletion: true,
-                      rectangularSelection: true,
-                      crosshairCursor: true,
-                      highlightActiveLine: true,
-                      highlightSelectionMatches: true,
-                      closeBracketsKeymap: true,
-                      defaultKeymap: true,
-                      searchKeymap: true,
-                      historyKeymap: true,
-                      foldKeymap: true,
-                      completionKeymap: true,
-                      lintKeymap: true,
-                    }}
-                  />
-                </div>
+              <div className="w-full h-64 border border-gray-600 rounded-lg overflow-hidden">
+                <CodeMirror
+                  value={answers[currentQuestion] || ""}
+                  height="100%"
+                  theme={dracula}
+                  extensions={[javascript()]}
+                  onChange={(value) => {
+                    setAnswers((prev) => ({ ...prev, [currentQuestion]: value }));
+                  }}
+                  style={{ height: '100%' }}
+                  basicSetup={{
+                    lineNumbers: true,
+                    highlightActiveLineGutter: true,
+                    highlightSpecialChars: true,
+                    foldGutter: true,
+                    drawSelection: true,
+                    dropCursor: true,
+                    allowMultipleSelections: true,
+                    indentOnInput: true,
+                    syntaxHighlighting: true,
+                    bracketMatching: true,
+                    closeBrackets: true,
+                    autocompletion: true,
+                    rectangularSelection: true,
+                    crosshairCursor: true,
+                    highlightActiveLine: true,
+                    highlightSelectionMatches: true,
+                    closeBracketsKeymap: true,
+                    defaultKeymap: true,
+                    searchKeymap: true,
+                    historyKeymap: true,
+                    foldKeymap: true,
+                    completionKeymap: true,
+                    lintKeymap: true,
+                  }}
+                />
+              </div>
               </div>
 
               {/* Navigation buttons */}
