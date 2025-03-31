@@ -232,7 +232,8 @@ const ExamSession = () => {
       // Format answers for submission
       const formattedAnswers = answerSheet.data.map(questionObj => {
         const question = Object.keys(questionObj)[0];
-        return { [question]: answers[question] || '' };
+        return {  [question]: answers[question] ? answers[question].replace(/\r\n/g, "\n") : "" 
+        };
       });
 
       // Submit the exam
@@ -466,6 +467,8 @@ const ExamSession = () => {
                     completionKeymap: true,
                     lintKeymap: true,
                   }}
+                  preserveScrollPosition={true}
+                  indentWithTab={true}
                 />
               </div>
               </div>
