@@ -15,53 +15,87 @@ function capitalize(str) {
 const formatAiRemarks = (text) => {
   if (!text) return null;
 
-  // Split the text into question sections
+  // Split the text into sections based on "Question" markers
   const sections = text.split(/\*\*Question \d+:\*\*/g).filter(Boolean);
   
   if (sections.length === 0) {
-    // If no question sections found, treat as a single block of text
+    // If no question sections found, return the text as a single formatted block
     return (
       <div className="space-y-4">
-        {text.split('\n').map((line, index) => (
-          <p key={index} className="text-gray-300">
-            {line.replace(/\*\*/g, '')}
-          </p>
-        ))}
+        {text.split('\n').map((line, index) => {
+          // Check for special formatting cases
+          if (line.toLowerCase().includes('overall:') || line.toLowerCase().startsWith('overall,')) {
+            return (
+              <p key={index} className="text-yellow-400 font-medium mt-4">
+                {line.replace(/\*\*/g, '')}
+              </p>
+            );
+          }
+
+          // Color code based on sentiment
+          const isPositive = line.toLowerCase().includes('correct') || 
+                           line.toLowerCase().includes('good') || 
+                           line.toLowerCase().includes('excellent');
+          const isNegative = line.toLowerCase().includes('incorrect') || 
+                           line.toLowerCase().includes('error') || 
+                           line.toLowerCase().includes('needs improvement') ||
+                           line.toLowerCase().includes('lack of') ||
+                           line.toLowerCase().includes('nonsensical');
+          
+          const textColor = isPositive ? 'text-green-400' : 
+                          isNegative ? 'text-red-400' : 
+                          'text-gray-300';
+
+          return (
+            <p key={index} className={`${textColor}`}>
+              {line.replace(/\*\*/g, '')}
+            </p>
+          );
+        })}
       </div>
     );
   }
 
+  // Process text with question sections
   return (
     <div className="space-y-6">
       {sections.map((section, index) => {
-        // Clean up the section text
-        const cleanText = section.trim().replace(/\*\*/g, '');
+        const cleanText = section.trim();
+        const lines = cleanText.split('\n').filter(line => line.trim());
         
         return (
           <div key={index} className="space-y-2">
             <h4 className="text-lg font-semibold text-blue-400">
               Question {index + 1}:
             </h4>
-            <div className="pl-4 border-l-2 border-gray-700">
-              {cleanText.split('\n').map((line, lineIndex) => {
+            <div className="pl-4 border-l-2 border-gray-700 space-y-2">
+              {lines.map((line, lineIndex) => {
                 // Handle special formatting
                 if (line.toLowerCase().includes('overall:') || line.toLowerCase().startsWith('overall,')) {
                   return (
-                    <p key={lineIndex} className="mt-4 text-yellow-400 font-medium">
-                      {line}
+                    <p key={lineIndex} className="text-yellow-400 font-medium mt-4">
+                      {line.replace(/\*\*/g, '')}
                     </p>
                   );
                 }
                 
-                // Color code feedback based on sentiment
-                const isPositive = line.toLowerCase().includes('correct') || line.toLowerCase().includes('good') || line.toLowerCase().includes('excellent');
-                const isNegative = line.toLowerCase().includes('incorrect') || line.toLowerCase().includes('error') || line.toLowerCase().includes('needs improvement');
+                // Color code based on sentiment
+                const isPositive = line.toLowerCase().includes('correct') || 
+                                 line.toLowerCase().includes('good') || 
+                                 line.toLowerCase().includes('excellent');
+                const isNegative = line.toLowerCase().includes('incorrect') || 
+                                 line.toLowerCase().includes('error') || 
+                                 line.toLowerCase().includes('needs improvement') ||
+                                 line.toLowerCase().includes('lack of') ||
+                                 line.toLowerCase().includes('nonsensical');
                 
-                const textColor = isPositive ? 'text-green-400' : isNegative ? 'text-red-400' : 'text-gray-300';
+                const textColor = isPositive ? 'text-green-400' : 
+                                isNegative ? 'text-red-400' : 
+                                'text-gray-300';
                 
                 return (
-                  <p key={lineIndex} className={`${textColor} ${lineIndex > 0 ? 'mt-2' : ''}`}>
-                    {line}
+                  <p key={lineIndex} className={textColor}>
+                    {line.replace(/\*\*/g, '')}
                   </p>
                 );
               })}
@@ -72,6 +106,7 @@ const formatAiRemarks = (text) => {
     </div>
   );
 };
+
 
 const ExamSession = () => {
   const { id: answerSheetId } = useParams();
@@ -287,7 +322,7 @@ const ExamSession = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            prompt: `Analyze the following codes in relation to the question "${question}". Return only strictly!! "will execute" or "will not execute". No other text should be included.
+            prompt: `Analyze the following code in relation to the question and analyze syntactically "${question}". Return only strictly!! "will execute" or "will not execute". No other text should be included.
 
             Question: ${question}
             Answer: ${answer}`,
@@ -296,10 +331,18 @@ const ExamSession = () => {
 
         if (statusResponse.ok) {
           const statusData = await statusResponse.json();
-          statuses.push({
-            questionNumber: i + 1,
-            status: statusData.response.trim().toLowerCase(),
-          });
+          if (statusData === ( "will execute" || "will not execute")){
+            statuses.push({
+              questionNumber: i + 1,
+              status: statusData.response.trim().toLowerCase(),
+            });
+          }else{
+            statuses.push({
+              questionNumber: i + 1,
+              status: "will not execute",
+            })
+          }
+
         }
       }
 
