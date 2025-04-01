@@ -889,7 +889,7 @@ const ExamSession = () => {
       if (!response.ok) throw new Error('Failed to submit answer sheet');
 
       toast.success('Exam submitted successfully');
-      
+      setLoading(false)
       if (answerSheet?.exam_type !== 'external') {
         navigate('/student');
       }
