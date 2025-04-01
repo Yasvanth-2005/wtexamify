@@ -458,7 +458,7 @@ const ExamSession = () => {
             <div className="text-6xl font-bold text-blue-500 text-center mb-4">{aiScore}</div>
             <p className="text-xl text-gray-400 text-center">Your AI-Generated Score</p>
           </div>
-          {exam_type !== 'viva' && ( 
+          {answerSheet?.exam_type !== 'viva' && ( 
             <div className="space-y-4 mb-8">
               <h3 className="text-xl font-semibold text-white mb-4">Answer Status:</h3>
               {aiAnswerStatus.map((status, index) => (
