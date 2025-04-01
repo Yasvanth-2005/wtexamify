@@ -675,7 +675,39 @@ const ExamSession = () => {
     return () => clearInterval(timer);
   }, [timeLeft]);
 
-  useEffect(() => {
+  // useEffect(() => {
+  //   const handleVisibilityChange = () => {
+  //     if (document.hidden && !copied && !answerSheet?.submit_status) {
+  //       markAsCopied();
+  //     }
+  //   };
+
+  //   const handleResize = () => {
+  //     if (!copied && !answerSheet?.submit_status) {
+  //       markAsCopied();
+  //     }
+  //   };
+
+  //   const handleBeforeUnload = (e) => {
+  //     if (!copied && !answerSheet?.submit_status) {
+  //       e.preventDefault();
+  //       markAsCopied();
+  //       e.returnValue = '';
+  //     }
+  //   };
+
+  //   document.addEventListener('visibilitychange', handleVisibilityChange);
+  //   window.addEventListener('resize', handleResize);
+  //   window.addEventListener('beforeunload', handleBeforeUnload);
+
+  //   return () => {
+  //     document.removeEventListener('visibilitychange', handleVisibilityChange);
+  //     window.removeEventListener('resize', handleResize);
+  //     window.removeEventListener('beforeunload', handleBeforeUnload);
+  //   };
+  // }, [copied, answerSheet]);
+
+    useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden && !copied && !answerSheet?.submit_status) {
         markAsCopied();
@@ -1109,6 +1141,46 @@ const ExamSession = () => {
             </div>
           </div>
         </div>
+        {showRefreshModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full">
+            <h2 className="text-xl font-bold text-white mb-4">Refresh Questions</h2>
+            <p className="text-gray-400 mb-4">Enter the refresh code to continue</p>
+            <input
+              type="password"
+              value={refreshCode}
+              onChange={(e) => setRefreshCode(e.target.value)}
+              placeholder="Enter refresh code"
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 mb-4"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowRefreshModal(false);
+                  setRefreshCode('');
+                }}
+                className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRefreshQuestions}
+                disabled={refreshLoading}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center"
+              >
+                {refreshLoading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Refreshing...
+                  </>
+                ) : (
+                  'Refresh'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     );
   }
