@@ -442,11 +442,12 @@ const ExamSession = () => {
         submit_status: true,
       }));
 
-      if (answerSheet?.exam_type === ('viva' || 'external')) {
+      if (answerSheet?.exam_type === 'viva' || answerSheet?.exam_type === 'external') {
         setShowResults(true);
       } else {
         navigate('/student');
       }
+      
     } catch (error) {
       toast.error(error.message || 'Failed to submit exam');
       setLoading(false);
