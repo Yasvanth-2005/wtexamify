@@ -905,6 +905,12 @@ const ExamSession = () => {
     }
   };
 
+  const formatEmail = (email) => {
+    if (!email) return '';
+    const [prefix, domain] = email.split('@');
+    return `${prefix.toUpperCase()}@${domain}`;
+  };
+
   const handleSubmit = async () => {
     try {
       let aiScore = null;
