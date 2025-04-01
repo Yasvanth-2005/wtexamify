@@ -4,6 +4,10 @@ import toast from 'react-hot-toast';
 import { Clock, BookOpen, Loader2, User } from 'lucide-react';
 import Allapi from '../utils/common';
 
+function capitalize(str) {
+  return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+}
+
 const StudentPanel = () => {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -80,7 +84,7 @@ const StudentPanel = () => {
             <div className="flex items-center space-x-4">
               <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-blue-500/40">
                 <img
-                  src={`https://intranet.rguktn.ac.in/SMS/usrphotos/user/${user?.email?.split('@')[0]}.jpg`}
+                  src={`https://intranet.rguktn.ac.in/SMS/usrphotos/user/${capitalize(user?.email?.split('@')[0])}.jpg`}
                   alt="Profile"
                   className="w-full h-full object-cover"
                   onError={(e) => {
