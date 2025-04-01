@@ -591,12 +591,25 @@ import Allapi from '../utils/common';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { dracula } from '@uiw/codemirror-theme-dracula';
-// import TypewriterComponent from 'typewriter-effect';
 import { TypeAnimation } from "react-type-animation";
 
 function capitalize(str) {
   return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
 }
+const formatAiRemarks = (text) => {
+  return text
+    .split('**')
+    .map((part, index) => {
+      if (index % 2 === 1) { // This is inside ** **
+        return `<strong>${part}</strong>`;
+      }
+      // Replace periods followed by ** with period and newline
+      return part.replace(/\.\s*\*\*/g, '.<br/>**');
+    })
+    .join('')
+    .split('. ')
+    .join('.<br/><br/>');
+};
 
 const ExamSession = () => {
   const { id: answerSheetId } = useParams();
@@ -679,38 +692,6 @@ const ExamSession = () => {
 
     return () => clearInterval(timer);
   }, [timeLeft]);
-
-  // useEffect(() => {
-  //   const handleVisibilityChange = () => {
-  //     if (document.hidden && !copied && !answerSheet?.submit_status) {
-  //       markAsCopied();
-  //     }
-  //   };
-
-  //   const handleResize = () => {
-  //     if (!copied && !answerSheet?.submit_status) {
-  //       markAsCopied();
-  //     }
-  //   };
-
-  //   const handleBeforeUnload = (e) => {
-  //     if (!copied && !answerSheet?.submit_status) {
-  //       e.preventDefault();
-  //       markAsCopied();
-  //       e.returnValue = '';
-  //     }
-  //   };
-
-  //   document.addEventListener('visibilitychange', handleVisibilityChange);
-  //   window.addEventListener('resize', handleResize);
-  //   window.addEventListener('beforeunload', handleBeforeUnload);
-
-  //   return () => {
-  //     document.removeEventListener('visibilitychange', handleVisibilityChange);
-  //     window.removeEventListener('resize', handleResize);
-  //     window.removeEventListener('beforeunload', handleBeforeUnload);
-  //   };
-  // }, [copied, answerSheet]);
 
     useEffect(() => {
     const handleVisibilityChange = () => {
@@ -1016,24 +997,11 @@ const ExamSession = () => {
 
           <div className="mb-8">
             <h3 className="text-xl font-semibold text-white mb-4">AI Remarks:</h3>
-            <div className="bg-gray-700 p-4 rounded-lg text-gray-300">
-              {/* <TypewriterComponent
-                options={{
-                  strings: [aiRemarks],
-                  autoStart: true,
-                  delay: 30,
-                  cursor: '_'
-                }}
-              /> */}
-                  <TypeAnimation
-                    sequence={[
-                      aiRemarks,  // Text to display
-                      1000,       // Pause before retyping
-                    ]}
-                    speed={100}    // Typing speed
-                    repeat={Infinity} // Optional: Repeat animation
-                    cursor="_"
-                  />
+            <div className="bg-gray-700/50 p-6 rounded-lg border border-gray-600">
+              <div 
+                className="text-gray-300 leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: formatAiRemarks(aiRemarks) }}
+              />
             </div>
           </div>
 
