@@ -831,7 +831,7 @@ const ExamSession = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            prompt: `Analyze the following codes in relation to the question "${question}". Return only "will execute" or "will not execute". No other text should be included.
+            prompt: `Analyze the following codes in relation to the question "${question}". Return only strictly!! "will execute" or "will not execute". No other text should be included.
 
             Question: ${question}
             Answer: ${answer}`,
@@ -931,6 +931,10 @@ const ExamSession = () => {
 
       toast.success('Exam submitted successfully');
       setLoading(false)
+      setAnswerSheet(prevState => ({
+        ...prevState,  // Keep the previous state values
+        submit_status: true,  // Update only the submit_status
+      }));
       if (answerSheet?.exam_type !== 'external') {
         navigate('/student');
       }
