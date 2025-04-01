@@ -618,6 +618,7 @@ const ExamSession = () => {
   const [aiAnswerStatus, setAiAnswerStatus] = useState([]);
   const [aiRemarks, setAiRemarks] = useState('');
   const [showResults, setShowResults] = useState(false);
+  const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
     const fetchData = async () => {
@@ -1023,7 +1024,7 @@ const ExamSession = () => {
                       aiRemarks,  // Text to display
                       1000,       // Pause before retyping
                     ]}
-                    speed={50}    // Typing speed
+                    speed={100}    // Typing speed
                     repeat={Infinity} // Optional: Repeat animation
                     cursor="_"
                   />
