@@ -24,19 +24,29 @@ func generateQuestionSets(questions []string, examType string) [][]string {
 	var setSize int
 	if examType == "viva" {
 		setSize = 10
-	} else {
+	} else if examType == "external" {
 		setSize = 3
+	} else {
+		setSize = 3 // Invalid exam type
 	}
 
 	if len(questions) < setSize {
 		return nil // Not enough questions to form a single set
 	}
 
-	rand.Shuffle(len(questions), func(i, j int) { questions[i], questions[j] = questions[j], questions[i] })
 	var result [][]string
 
-	for i := 0; i+setSize <= len(questions); i += setSize {
-		result = append(result, questions[i:i+setSize])
+	if examType == "external" || examType == "internal" {
+		// Group questions sequentially in sets of 3, ignoring remaining questions if not a multiple of 3
+		for i := 0; i+setSize <= len(questions); i += setSize {
+			result = append(result, questions[i:i+setSize])
+		}
+	} else if examType == "viva" {
+		// Shuffle for viva
+		rand.Shuffle(len(questions), func(i, j int) { questions[i], questions[j] = questions[j], questions[i] })
+		for i := 0; i+setSize <= len(questions); i += setSize {
+			result = append(result, questions[i:i+setSize])
+		}
 	}
 
 	return result
@@ -298,8 +308,10 @@ func GetSetsByExamID(c *gin.Context) {
 
 func SendEmails(c *gin.Context) {
 	// List of recipient emails
-	emails := []string{"maheshkarri2109@gmail.com", "n210507@rguktn.ac.in"}
+	// emails := []string{"maheshkarri2109@gmail.com", "n210507@rguktn.ac.in"}
 
+	//cse5
+	emails := []string{"n210001@rguktn.ac.in", "n210002@rguktn.ac.in", "n210017@rguktn.ac.in", "n210023@rguktn.ac.in", "n210049@rguktn.ac.in", "n210059@rguktn.ac.in", "n210101@rguktn.ac.in", "n210103@rguktn.ac.in", "n210197@rguktn.ac.in", "n210210@rguktn.ac.in", "n210221@rguktn.ac.in", "n210242@rguktn.ac.in", "n210243@rguktn.ac.in", "n210249@rguktn.ac.in", "n210256@rguktn.ac.in", "n210278@rguktn.ac.in", "n210281@rguktn.ac.in", "n210284@rguktn.ac.in", "n210292@rguktn.ac.in", "n210302@rguktn.ac.in", "n210327@rguktn.ac.in", "n210338@rguktn.ac.in", "n210353@rguktn.ac.in", "n210379@rguktn.ac.in", "n210381@rguktn.ac.in", "n210385@rguktn.ac.in", "n210399@rguktn.ac.in", "n210435@rguktn.ac.in", "n210459@rguktn.ac.in", "n210479@rguktn.ac.in", "n210486@rguktn.ac.in", "n210492@rguktn.ac.in", "n210496@rguktn.ac.in", "n210519@rguktn.ac.in", "n210520@rguktn.ac.in", "n210570@rguktn.ac.in", "n210574@rguktn.ac.in", "n210594@rguktn.ac.in", "n210600@rguktn.ac.in", "n210655@rguktn.ac.in", "n210727@rguktn.ac.in", "n210730@rguktn.ac.in", "n210735@rguktn.ac.in", "n210742@rguktn.ac.in", "n210760@rguktn.ac.in", "n210803@rguktn.ac.in", "n210813@rguktn.ac.in", "n210866@rguktn.ac.in", "n210901@rguktn.ac.in", "n210902@rguktn.ac.in", "n210912@rguktn.ac.in", "n210930@rguktn.ac.in", "n210965@rguktn.ac.in", "n210984@rguktn.ac.in", "n211006@rguktn.ac.in", "n211056@rguktn.ac.in", "n211069@rguktn.ac.in", "n211092@rguktn.ac.in"}
 	// Email Configuration
 	smtpHost := "smtp.gmail.com" // Use your email provider's SMTP
 	smtpPort := 587
