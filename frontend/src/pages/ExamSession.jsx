@@ -591,7 +591,8 @@ import Allapi from '../utils/common';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { dracula } from '@uiw/codemirror-theme-dracula';
-import TypewriterComponent from 'typewriter-effect';
+// import TypewriterComponent from 'typewriter-effect';
+import { TypeAnimation } from "react-type-animation";
 
 const ExamSession = () => {
   const { id: answerSheetId } = useParams();
@@ -960,14 +961,23 @@ const ExamSession = () => {
           <div className="mb-8">
             <h3 className="text-xl font-semibold text-white mb-4">AI Remarks:</h3>
             <div className="bg-gray-700 p-4 rounded-lg text-gray-300">
-              <TypewriterComponent
+              {/* <TypewriterComponent
                 options={{
                   strings: [aiRemarks],
                   autoStart: true,
                   delay: 30,
                   cursor: '_'
                 }}
-              />
+              /> */}
+                  <TypeAnimation
+                    sequence={[
+                      aiRemarks,  // Text to display
+                      1000,       // Pause before retyping
+                    ]}
+                    speed={50}    // Typing speed
+                    repeat={Infinity} // Optional: Repeat animation
+                    cursor="_"
+                  />
             </div>
           </div>
 
