@@ -597,17 +597,19 @@ function capitalize(str) {
   return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
 }
 const formatAiRemarks = (text) => {
-  return text.split('\n').map((line, index) => {
-    // Handle question headers (text between **)
-    const parts = line.split('**');
-    return parts.map((part, i) => {
-      if (i % 2 === 1) { // This is inside ** **
-        return `<span class="text-blue-400 font-semibold">${part}</span>`;
-      }
-      // Add spacing after periods for better readability
-      return part.replace(/\. /g, '.<br/><br/>');
-    }).join('');
-  }).join('<br/>');
+  // Split the text into lines
+  const lines = text.split('\n');
+  const formattedLines = lines.map(line => {
+    // Check if line contains question marker
+    if (line.includes('**Question')) {
+      // Add spacing before question
+      return `<div class="mt-4">${line.replace(/\*\*(.*?)\*\*/g, '<span class="text-blue-400 font-semibold">$1</span>')}</div>`;
+    }
+    // Handle regular text
+    return `<div class="mt-2">${line.replace(/\*\*(.*?)\*\*/g, '<span class="text-blue-400 font-semibold">$1</span>')}</div>`;
+  });
+
+  return formattedLines.join('');
 };
 
 const ExamSession = () => {
