@@ -594,6 +594,10 @@ import { dracula } from '@uiw/codemirror-theme-dracula';
 // import TypewriterComponent from 'typewriter-effect';
 import { TypeAnimation } from "react-type-animation";
 
+function capitalize(str) {
+  return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+}
+
 const ExamSession = () => {
   const { id: answerSheetId } = useParams();
   const navigate = useNavigate();
