@@ -519,10 +519,7 @@ const ExamSession = () => {
           <div className="mb-8">
             <h3 className="text-xl font-semibold text-white mb-4">AI Remarks:</h3>
             <div className="bg-gray-700/50 p-6 rounded-lg border border-gray-600">
-              <div 
-                className="text-gray-300 leading-relaxed space-y-2"
-                dangerouslySetInnerHTML={{ __html: formatAiRemarks(aiRemarks) }}
-              />
+            {formatAiRemarks(aiRemarks)}
             </div>
           </div>
 
