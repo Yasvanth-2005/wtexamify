@@ -597,18 +597,17 @@ function capitalize(str) {
   return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
 }
 const formatAiRemarks = (text) => {
-  return text
-    .split('**')
-    .map((part, index) => {
-      if (index % 2 === 1) { // This is inside ** **
-        return `<strong>${part}</strong>`;
+  return text.split('\n').map((line, index) => {
+    // Handle question headers (text between **)
+    const parts = line.split('**');
+    return parts.map((part, i) => {
+      if (i % 2 === 1) { // This is inside ** **
+        return `<span class="text-blue-400 font-semibold">${part}</span>`;
       }
-      // Replace periods followed by ** with period and newline
-      return part.replace(/\.\s*\*\*/g, '.<br/>**');
-    })
-    .join('')
-    .split('. ')
-    .join('.<br/><br/>');
+      // Add spacing after periods for better readability
+      return part.replace(/\. /g, '.<br/><br/>');
+    }).join('');
+  }).join('<br/>');
 };
 
 const ExamSession = () => {
@@ -999,7 +998,7 @@ const ExamSession = () => {
             <h3 className="text-xl font-semibold text-white mb-4">AI Remarks:</h3>
             <div className="bg-gray-700/50 p-6 rounded-lg border border-gray-600">
               <div 
-                className="text-gray-300 leading-relaxed"
+                className="text-gray-300 leading-relaxed space-y-2"
                 dangerouslySetInnerHTML={{ __html: formatAiRemarks(aiRemarks) }}
               />
             </div>
