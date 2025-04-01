@@ -13,43 +13,64 @@ function capitalize(str) {
 }
 
 const formatAiRemarks = (text) => {
-  // Replace bold markers with proper styling
-  return text.split('\n').map((line, index) => {
-    // Handle section headers (lines ending with ":")
-    if (line.endsWith(':')) {
-      return (
-        <h3 key={index} className="mt-4 mb-2 text-lg font-semibold text-green-800">
-          {line}
-        </h3>
-      );
-    }
-    
-    // Handle bullet points
-    if (line.startsWith('* ')) {
-      return (
-        <li key={index} className="mb-2 ml-4">
-          {line.substring(2).split('**')
-            .map((part, i) => 
-              i % 2 === 0 ? 
-                part : 
-                <strong key={i} className="text-green-700">{part}</strong>
-            )}
-        </li>
-      );
-    }
-    
-    // Regular text
+  if (!text) return null;
+
+  // Split the text into question sections
+  const sections = text.split(/\*\*Question \d+:\*\*/g).filter(Boolean);
+  
+  if (sections.length === 0) {
+    // If no question sections found, treat as a single block of text
     return (
-      <p key={index} className="mb-2">
-        {line.split('**')
-          .map((part, i) => 
-            i % 2 === 0 ? 
-              part : 
-              <strong key={i} className="text-green-700">{part}</strong>
-          )}
-      </p>
+      <div className="space-y-4">
+        {text.split('\n').map((line, index) => (
+          <p key={index} className="text-gray-300">
+            {line.replace(/\*\*/g, '')}
+          </p>
+        ))}
+      </div>
     );
-  });
+  }
+
+  return (
+    <div className="space-y-6">
+      {sections.map((section, index) => {
+        // Clean up the section text
+        const cleanText = section.trim().replace(/\*\*/g, '');
+        
+        return (
+          <div key={index} className="space-y-2">
+            <h4 className="text-lg font-semibold text-blue-400">
+              Question {index + 1}:
+            </h4>
+            <div className="pl-4 border-l-2 border-gray-700">
+              {cleanText.split('\n').map((line, lineIndex) => {
+                // Handle special formatting
+                if (line.toLowerCase().includes('overall:') || line.toLowerCase().startsWith('overall,')) {
+                  return (
+                    <p key={lineIndex} className="mt-4 text-yellow-400 font-medium">
+                      {line}
+                    </p>
+                  );
+                }
+                
+                // Color code feedback based on sentiment
+                const isPositive = line.toLowerCase().includes('correct') || line.toLowerCase().includes('good') || line.toLowerCase().includes('excellent');
+                const isNegative = line.toLowerCase().includes('incorrect') || line.toLowerCase().includes('error') || line.toLowerCase().includes('needs improvement');
+                
+                const textColor = isPositive ? 'text-green-400' : isNegative ? 'text-red-400' : 'text-gray-300';
+                
+                return (
+                  <p key={lineIndex} className={`${textColor} ${lineIndex > 0 ? 'mt-2' : ''}`}>
+                    {line}
+                  </p>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 };
 
 const ExamSession = () => {
@@ -327,7 +348,7 @@ const ExamSession = () => {
       setAiAnswerStatus(statuses);
       setAiScore(finalAiScore);
       setShowResults(true);
-      
+      setAiEvaluating
       return finalAiScore;
     } catch (error) {
       console.error('AI evaluation failed:', error);
@@ -427,7 +448,7 @@ const ExamSession = () => {
     );
   }
 
-  if (showResults && answerSheet?.exam_type !== 'viva') {
+  if (showResults && answerSheet?.exam_type !== 'internal') {
     return (
       <div className="min-h-screen bg-gray-900 p-8">
         <div className="max-w-2xl mx-auto bg-gray-800 rounded-xl p-8">
@@ -437,18 +458,20 @@ const ExamSession = () => {
             <div className="text-6xl font-bold text-blue-500 text-center mb-4">{aiScore}</div>
             <p className="text-xl text-gray-400 text-center">Your AI-Generated Score</p>
           </div>
+          {exam_type !== 'viva' && ( 
+            <div className="space-y-4 mb-8">
+              <h3 className="text-xl font-semibold text-white mb-4">Answer Status:</h3>
+              {aiAnswerStatus.map((status, index) => (
+                <div key={index} className="flex items-center justify-between bg-gray-700 p-4 rounded-lg">
+                  <span className="text-white">Question {status.questionNumber}</span>
+                  <span className={status.status === 'will execute' ? 'text-green-400' : 'text-red-400'}>
+                    {status.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
 
-          <div className="space-y-4 mb-8">
-            <h3 className="text-xl font-semibold text-white mb-4">Answer Status:</h3>
-            {aiAnswerStatus.map((status, index) => (
-              <div key={index} className="flex items-center justify-between bg-gray-700 p-4 rounded-lg">
-                <span className="text-white">Question {status.questionNumber}</span>
-                <span className={status.status === 'will execute' ? 'text-green-400' : 'text-red-400'}>
-                  {status.status}
-                </span>
-              </div>
-            ))}
-          </div>
 
           <div className="mb-8">
             <h3 className="text-xl font-semibold text-white mb-4">AI Remarks:</h3>
