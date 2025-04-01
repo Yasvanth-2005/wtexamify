@@ -65,9 +65,9 @@ const formatAiRemarks = (text) => {
         
         return (
           <div key={index} className="space-y-2">
-            <h4 className="text-lg font-semibold text-blue-400">
+            {/* <h4 className="text-lg font-semibold text-blue-400">
               Question {index + 1}:
-            </h4>
+            </h4> */}
             <div className="pl-4 border-l-2 border-gray-700 space-y-2">
               {lines.map((line, lineIndex) => {
                 // Handle special formatting
