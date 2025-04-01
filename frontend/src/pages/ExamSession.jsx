@@ -831,7 +831,10 @@ const ExamSession = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            prompt: `Analyze this JavaScript code and return only "will execute" or "will not execute". Return only one of these two phrases, no other text: ${answer}`,
+            prompt: `Analyze the following codes in relation to the question "${question}". Return only "will execute" or "will not execute". No other text should be included.
+
+            Question: ${question}
+            Answer: ${answer}`,
           }),
         });
 
@@ -852,7 +855,13 @@ const ExamSession = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt: `Analyze these JavaScript answers and provide brief, constructive feedback about the overall code quality and potential improvements. Keep it under 100 words: ${JSON.stringify(answers)}`,
+          prompt: `Analyze these JavaScript answers in relation to their respective questions and provide brief, constructive feedback about the overall code quality and potential improvements. Keep it under 100 words. Below are the questions and answers:
+
+          ${answerSheet.data.map((item, index) => {
+            const question = Object.keys(item)[0];
+            const answer = answers[question] || '';
+            return `Question ${index + 1}: ${question}\nAnswer: ${answer}\n`;
+          }).join("\n")}`,
         }),
       });
 
