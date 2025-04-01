@@ -21,7 +21,7 @@ const StudentPanel = () => {
     const [prefix, domain] = email.split('@');
     return `${prefix.toUpperCase()}@${domain}`;
   };
-console.log("user pic: ",capitalize(user?.email?.split('@')[0]));
+// console.log("user pic: ",capitalize(user?.email?.split('@')[0]))
   useEffect(() => {
     fetchStartedExams();
   }, []);

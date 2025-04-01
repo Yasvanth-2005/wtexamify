@@ -1201,6 +1201,27 @@ const ExamSession = () => {
   return (
     <div className="min-h-screen bg-gray-900 p-8">
       <div className="max-w-4xl mx-auto space-y-8">
+      <div className="bg-gray-800 rounded-xl border-2 border-blue-500/20 p-6 mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-blue-500/40">
+                <img
+                  src={`https://intranet.rguktn.ac.in/SMS/usrphotos/user/${capitalize(user?.email?.split('@')[0])}.jpg`}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXVzZXIiPjxwYXRoIGQ9Ik0xOSAyMXYtMmE0IDQgMCAwIDAtNC00SDlhNCA0IDAgMCAwLTQgNHYyIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSI3IiByPSI0Ii8+PC9zdmc+';
+                    e.target.className = 'w-full h-full object-contain p-2 text-gray-400';
+                  }}
+                />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-white">{formatEmail(user?.email)}</h2>
+                <p className="text-gray-400">Student</p>
+              </div>
+            </div>
+          </div>
+        </div>
         <div className="bg-gray-800 rounded-xl border-2 border-blue-500/20 p-6">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-4">
