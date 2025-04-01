@@ -331,7 +331,7 @@ const ExamSession = () => {
 
         if (statusResponse.ok) {
           const statusData = await statusResponse.json();
-          if (statusData === ( "will execute" || "will not execute")){
+          if ( statusData.response.trim().toLowerCase() == ( "will execute" || "will not execute")){
             statuses.push({
               questionNumber: i + 1,
               status: statusData.response.trim().toLowerCase(),
@@ -391,7 +391,6 @@ const ExamSession = () => {
       setAiAnswerStatus(statuses);
       setAiScore(finalAiScore);
       setShowResults(true);
-      setAiEvaluating
       return finalAiScore;
     } catch (error) {
       console.error('AI evaluation failed:', error);
@@ -443,10 +442,9 @@ const ExamSession = () => {
         submit_status: true,
       }));
 
-      if (answerSheet?.exam_type === 'viva') {
-        setShowResults(false);
-        navigate('/student');
-      } else if (answerSheet?.exam_type !== 'external') {
+      if (answerSheet?.exam_type === ('viva' || 'external')) {
+        setShowResults(true);
+      } else {
         navigate('/student');
       }
     } catch (error) {
