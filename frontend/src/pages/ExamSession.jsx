@@ -1246,7 +1246,13 @@ const ExamSession = () => {
               <div className="space-y-4">
                 <h3 className="text-lg text-white">Question {activeQuestionIndex + 1}</h3>
                 <p className="text-white">{currentQuestion}</p>
-                <div className="w-full h-64 border border-gray-600 rounded-lg overflow-hidden">
+                <textarea
+                   value={answers[currentQuestion] || ''}
+                  onChange={(e) => setAnswers(prev => ({ ...prev, [currentQuestion]: e.target.value }))}
+                   className="w-full h-64 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  placeholder="Enter your answer..."
+                 /> 
+                {/* <div className="w-full h-64 border border-gray-600 rounded-lg overflow-hidden">
                   <CodeMirror
                     value={answers[currentQuestion] || ""}
                     height="100%"
@@ -1284,7 +1290,8 @@ const ExamSession = () => {
                     preserveScrollPosition={true}
                     indentWithTab={true}
                   />
-                </div>
+                </div> */}
+                
               </div>
 
               <div className="flex justify-between">
