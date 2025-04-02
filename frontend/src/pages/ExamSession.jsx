@@ -231,7 +231,7 @@ const ExamSession = () => {
   }, [copied, answerSheet]);
 
   const handleRefreshQuestions = async () => {
-    if (refreshCode !== 'directedbyvasu') {
+    if (refreshCode !== 'jersey') {
       toast.error('Invalid refresh code');
       return;
     }
