@@ -121,6 +121,7 @@ const ExamSession = () => {
   const [showRefreshModal, setShowRefreshModal] = useState(false);
   const [refreshCode, setRefreshCode] = useState('');
   const [refreshLoading, setRefreshLoading] = useState(false);
+  const [copyLoading, setCopyLoading] = useState(false);
   const [aiEvaluating, setAiEvaluating] = useState(false);
   const [aiScore, setAiScore] = useState(null);
   const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
@@ -297,6 +298,7 @@ const ExamSession = () => {
 
   const handleRemoveCopied = async () => {
     try {
+      setCopyLoading(true);
       const response = await fetch(Allapi.removeCopied.url(answerSheetId), {
         method: 'PUT',
         headers: {
@@ -305,7 +307,7 @@ const ExamSession = () => {
         },
         body: JSON.stringify({ passcode }),
       });
-
+      setCopyLoading(false)
       if (!response.ok) throw new Error('Invalid passcode');
 
       setCopied(false);
@@ -601,7 +603,7 @@ const ExamSession = () => {
               onClick={handleRemoveCopied}
               className="w-full px-6 py-3 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-all duration-300"
             >
-              Submit Passcode
+              {copyLoading ? "Submitting..." : "Submit Passcode"}
             </button>
           </div>
         </div>
