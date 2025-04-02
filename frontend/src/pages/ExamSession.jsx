@@ -264,6 +264,8 @@ const ExamSession = () => {
     if (copied || answerSheet?.submit_status) return;
 
     try {
+      const newCopyCount = (answerSheet.copy_count || 0) + 1;
+      
       const response = await fetch(Allapi.assignCopied.url(answerSheetId), {
         method: 'PUT',
         headers: {
@@ -273,13 +275,25 @@ const ExamSession = () => {
 
       if (!response.ok) throw new Error('Failed to mark as copied');
       
+      setAnswerSheet(prev => ({
+        ...prev,
+        copy_count: newCopyCount
+      }));
+      
       setCopied(true);
       setShowPasscodeModal(true);
-      toast.error('You have been caught cheating!');
+      
+      if (newCopyCount >= 4) {
+        toast.error('Maximum copy attempts reached. Submitting exam...');
+        handleSubmit();
+      } else {
+        toast.error(`Warning: ${4 - newCopyCount} chances remaining before automatic submission!`);
+      }
     } catch (error) {
       console.error('Error marking as copied:', error);
     }
   };
+
 
   const handleRemoveCopied = async () => {
     try {
@@ -568,11 +582,13 @@ const ExamSession = () => {
   }
 
   if (copied) {
+    const remainingChances = 4 - (answerSheet.copy_count || 0);
     return (
       <div className="min-h-screen bg-gray-900 p-8 flex items-center justify-center">
         <div className="bg-gray-800 rounded-xl border-2 border-red-500/20 p-8 text-center max-w-lg">
           <h2 className="text-2xl font-bold text-red-400 mb-4">Caught Cheating</h2>
-          <p className="text-gray-400 mb-6">You have been marked for copying. Please enter the passcode to continue.</p>
+          <p className="text-gray-400 mb-2">You have been marked for copying.</p>
+          <p className="text-yellow-400 mb-6">{remainingChances} {remainingChances === 1 ? 'chance' : 'chances'} remaining before automatic submission</p>
           <div className="space-y-4">
             <input
               type="password"
