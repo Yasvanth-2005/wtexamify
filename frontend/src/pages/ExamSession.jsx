@@ -620,13 +620,13 @@ const ExamSession = () => {
       <div className="min-h-screen bg-gray-900 p-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <button
+            {/* <button
               onClick={() => navigate('/student')}
               className="flex items-center text-blue-400 hover:text-blue-300 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
               Back to Dashboard
-            </button>
+            </button> */}
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setShowRefreshModal(true)}
@@ -781,13 +781,13 @@ const ExamSession = () => {
               <div className="space-y-4">
                 <h3 className="text-lg text-white">Question {activeQuestionIndex + 1}</h3>
                 <p className="text-white">{currentQuestion}</p>
-                <textarea
+                {/* <textarea
                    value={answers[currentQuestion] || ''}
                   onChange={(e) => setAnswers(prev => ({ ...prev, [currentQuestion]: e.target.value }))}
                    className="w-full h-64 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
                   placeholder="Enter your answer..."
-                 /> 
-                {/* <div className="w-full h-64 border border-gray-600 rounded-lg overflow-hidden">
+                 />  */}
+                <div className="w-full h-64 border border-gray-600 rounded-lg overflow-hidden">
                   <CodeMirror
                     value={answers[currentQuestion] || ""}
                     height="100%"
@@ -825,7 +825,7 @@ const ExamSession = () => {
                     preserveScrollPosition={true}
                     indentWithTab={true}
                   />
-                </div> */}
+                </div>
                 
               </div>
 
