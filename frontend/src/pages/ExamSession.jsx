@@ -232,7 +232,7 @@ const ExamSession = () => {
   }, [copied, answerSheet]);
 
   const handleRefreshQuestions = async () => {
-    if (refreshCode !== 'jersey') {
+    if (refreshCode !== 'wtlabexam') {
       toast.error('Invalid refresh code');
       return;
     }
@@ -597,6 +597,7 @@ const ExamSession = () => {
               value={passcode}
               onChange={(e) => setPasscode(e.target.value)}
               placeholder="Enter passcode"
+              autocomplete="new-password"
               className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
             />
             <button
@@ -678,6 +679,7 @@ const ExamSession = () => {
               value={refreshCode}
               onChange={(e) => setRefreshCode(e.target.value)}
               placeholder="Enter refresh code"
+              autocomplete="new-password"
               className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 mb-4"
             />
             <div className="flex justify-end gap-2">
@@ -900,6 +902,7 @@ const ExamSession = () => {
               value={refreshCode}
               onChange={(e) => setRefreshCode(e.target.value)}
               placeholder="Enter refresh code"
+              autocomplete="new-password"
               className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 mb-4"
             />
             <div className="flex justify-end gap-2">
