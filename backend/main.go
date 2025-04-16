@@ -22,7 +22,8 @@ func main() {
 
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"https://wtlabexam.vercel.app"}, // Change to your frontend URL
+		AllowOrigins: []string{"https://examifyrgukt.vercel.app"}, // Change to your frontend URL
+		// AllowOrigins:     []string{"http://localhost:5173"}, // Change to your frontend URL
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},

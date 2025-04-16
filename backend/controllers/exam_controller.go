@@ -26,8 +26,10 @@ func generateQuestionSets(questions []string, examType string) [][]string {
 		setSize = 10
 	} else if examType == "external" {
 		setSize = 3
+	} else if examType == "coaviva" {
+		setSize = 15
 	} else {
-		setSize = 3 // Invalid exam type
+		setSize = 3
 	}
 
 	if len(questions) < setSize {
@@ -41,7 +43,7 @@ func generateQuestionSets(questions []string, examType string) [][]string {
 		for i := 0; i+setSize <= len(questions); i += setSize {
 			result = append(result, questions[i:i+setSize])
 		}
-	} else if examType == "viva" {
+	} else if examType == "viva" || examType == "coaviva" {
 		// Shuffle for viva
 		rand.Shuffle(len(questions), func(i, j int) { questions[i], questions[j] = questions[j], questions[i] })
 		for i := 0; i+setSize <= len(questions); i += setSize {
@@ -70,7 +72,7 @@ func CreateExam(c *gin.Context) {
 	exam.ID = primitive.NewObjectID()
 	exam.Status = "stop"
 	exam.ExamType = strings.ToLower(exam.ExamType)
-	if exam.ExamType != "internal" && exam.ExamType != "external" && exam.ExamType != "viva" {
+	if exam.ExamType != "internal" && exam.ExamType != "external" && exam.ExamType != "viva" && exam.ExamType != "coaviva" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid exam type"})
 		return
 	}
@@ -151,7 +153,7 @@ func UpdateExam(c *gin.Context) {
 	}
 	if updateData.ExamType != "" {
 		examType := strings.ToLower(updateData.ExamType)
-		if examType != "internal" && examType != "external" && examType != "viva" {
+		if examType != "internal" && examType != "external" && examType != "viva" && examType != "coaviva" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid exam type"})
 			return
 		}
