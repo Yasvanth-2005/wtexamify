@@ -798,7 +798,8 @@ const ExamSession = () => {
                     onChange={(value) => {
                       setAnswers((prev) => ({ ...prev, [currentQuestion]: value }));
                     }}
-                    style={{ height: '100%' }}
+                    style={{ height: '100%', scrollbarWidth:'none' }}
+                    className='hide-scrollbar'
                     basicSetup={{
                       lineNumbers: true,
                       highlightActiveLineGutter: true,
