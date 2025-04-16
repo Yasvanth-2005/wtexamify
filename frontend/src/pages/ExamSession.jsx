@@ -789,7 +789,7 @@ const ExamSession = () => {
                    className="w-full h-64 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
                   placeholder="Enter your answer..."
                  />  */}
-                <div className="w-full h-64 border border-gray-600 rounded-lg overflow-hidden">
+                <div className="w-full h-64 border border-gray-600 rounded-lg overflow-hidden hide-scrollbar" style={{scrollbarWidth:'none'}}>
                   <CodeMirror
                     value={answers[currentQuestion] || ""}
                     height="100%"
