@@ -184,6 +184,7 @@ const CreateExam = () => {
                 <option value="internal">Internal</option>
                 <option value="external">External</option>
                 <option value="viva">Viva</option>
+                <option value="coaviva">COA-Viva</option>
               </select>
             </div>
 

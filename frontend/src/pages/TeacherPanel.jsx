@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import * as XLSX from 'xlsx';
 import { Plus, Clock, BookOpen, Download, FileText, Loader, Mail } from 'lucide-react';
 import Allapi from '../utils/common';
 
@@ -16,6 +17,7 @@ const TeacherPanel = () => {
   const [loadingQuestionSets, setLoadingQuestionSets] = useState(false);
   const [downloadingSheets, setDownloadingSheets] = useState({});
   const [downloadingAll, setDownloadingAll] = useState(false);
+  const [downloadingScores, setDownloadingScores] = useState(false);
   const [sendingEmails, setSendingEmails] = useState({});
   const [loadingExamStatus, setLoadingExamStatus] = useState({});
   const navigate = useNavigate();
@@ -24,6 +26,34 @@ const TeacherPanel = () => {
   useEffect(() => {
     fetchExams();
   }, []);
+
+  const downloadAiScores = () => {
+    try {
+      setDownloadingScores(true);
+      
+      // Prepare data for Excel
+      // console.log("answer sheets: ",answerSheets)
+      const data = answerSheets.map(sheet => ({
+        'Student Name': sheet.student_name,
+        'AI Score': sheet.ai_score
+      }));
+
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(data);
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'AI Scores');
+
+      // Generate Excel file
+      XLSX.writeFile(wb, 'ai-scores.xlsx');
+    } catch (error) {
+      toast.error('Failed to download AI scores');
+      console.error("error is: ",error);
+    } finally {
+      setDownloadingScores(false);
+    }
+  };
 
   const handleSendEmails = async (examId) => {
     try {
@@ -482,7 +512,19 @@ const TeacherPanel = () => {
                 </div>
               ) : answerSheets.length > 0 ? (
                 <div className="space-y-4">
-                  <div className="flex justify-end mb-4">
+                  <div className="flex gap-4 justify-end mb-4">
+                    <button
+                      onClick={downloadAiScores}
+                      disabled={downloadingScores}
+                      className="flex items-center px-4 py-2 text-yellow-400 bg-yellow-500/20 rounded-lg hover:bg-yellow-500/30 transition-all duration-300"
+                    >
+                      {downloadingScores ? (
+                        <Loader className="w-4 h-4 animate-spin mr-2" />
+                      ) : (
+                        <FileText className="w-4 h-4 mr-2" />
+                      )}
+                      Download AI Scores
+                    </button>
                     <button
                       onClick={downloadAllPDFs}
                       disabled={downloadingAll}

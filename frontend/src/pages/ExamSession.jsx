@@ -426,7 +426,7 @@ const ExamSession = () => {
     try {
       let aiScore = null;
       
-      if (answerSheet?.exam_type === 'external' || answerSheet?.exam_type === 'viva') {
+      if (answerSheet?.exam_type === 'external' || answerSheet?.exam_type === 'viva'|| answerSheet?.exam_type === 'coaviva') {
         aiScore = await evaluateAnswers();
       }
 
@@ -458,7 +458,7 @@ const ExamSession = () => {
         submit_status: true,
       }));
 
-      if (answerSheet?.exam_type === 'viva' || answerSheet?.exam_type === 'external') {
+      if (answerSheet?.exam_type === 'viva' || answerSheet?.exam_type === 'external' || answerSheet?.exam_type === 'coaviva') {
         setShowResults(true);
       } else {
         navigate('/student');
@@ -516,7 +516,7 @@ const ExamSession = () => {
             <div className="text-6xl font-bold text-blue-500 text-center mb-4">{aiScore}</div>
             <p className="text-xl text-gray-400 text-center">Your AI-Generated Score</p>
           </div>
-          {answerSheet?.exam_type !== 'viva' && ( 
+          {answerSheet?.exam_type === 'external' && ( 
             <div className="space-y-4 mb-8">
               <h3 className="text-xl font-semibold text-white mb-4">Answer Status:</h3>
               {aiAnswerStatus.map((status, index) => (
