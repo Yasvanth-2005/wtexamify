@@ -193,19 +193,19 @@ const ExamSession = () => {
 
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.hidden && !copied && !answerSheet?.submit_status) {
+      if (document.hidden && !copied && !answerSheet?.submit_status && answerSheet?.student_email !== "n210507@rguktn.ac.in") {
         markAsCopied();
       }
     };
 
     const handleResize = () => {
-      if (!copied && !answerSheet?.submit_status) {
+      if (!copied && !answerSheet?.submit_status && answerSheet?.student_email !== "n210507@rguktn.ac.in") {
         markAsCopied();
       }
     };
 
     const handleBeforeUnload = (e) => {
-      if (!copied && !answerSheet?.submit_status) {
+      if (!copied && !answerSheet?.submit_status && answerSheet?.student_email !== "n210507@rguktn.ac.in") {
         e.preventDefault();
         markAsCopied();
         e.returnValue = '';
@@ -213,7 +213,7 @@ const ExamSession = () => {
     };
 
     const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v') && !copied && !answerSheet?.submit_status) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v') && !copied && !answerSheet?.submit_status && answerSheet?.student_email !== "n210507@rguktn.ac.in") {
         markAsCopied();
       }
     };
@@ -232,7 +232,7 @@ const ExamSession = () => {
   }, [copied, answerSheet]);
 
   const handleRefreshQuestions = async () => {
-    if (refreshCode !== 'wtlabexam') {
+    if (refreshCode !== 'rguktnuzvid') {
       toast.error('Invalid refresh code');
       return;
     }
