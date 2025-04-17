@@ -193,19 +193,19 @@ const ExamSession = () => {
 
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.hidden && !copied && !answerSheet?.submit_status && (answerSheet?.student_email !== "n210507@rguktn.ac.in" && answerSheet?.student_email !== "n210296@rguktn.ac.in")) {
+      if (document.hidden && !copied && !answerSheet?.submit_status ) {
         markAsCopied();
       }
     };
 
     const handleResize = () => {
-      if (!copied && !answerSheet?.submit_status &&(answerSheet?.student_email !== "n210507@rguktn.ac.in" && answerSheet?.student_email !== "n210296@rguktn.ac.in")) {
+      if (!copied && !answerSheet?.submit_status ) {
         markAsCopied();
       }
     };
 
     const handleBeforeUnload = (e) => {
-      if (!copied && !answerSheet?.submit_status && answerSheet?.student_email !== "n210507@rguktn.ac.in") {
+      if (!copied && !answerSheet?.submit_status ) {
         e.preventDefault();
         markAsCopied();
         e.returnValue = '';

@@ -467,7 +467,7 @@ const TeacherPanel = () => {
                       View Sets
                     </button>
                   </div>
-                  {exam.status === 'start' && (
+                  {/* {exam.status === 'start' && (
                     <button
                       onClick={() => handleSendEmails(exam.id)}
                       disabled={sendingEmails[exam.id]}
@@ -482,7 +482,7 @@ const TeacherPanel = () => {
                         </>
                       )}
                     </button>
-                  )}
+                  )} */}
                 </div>
               </div>
             </div>
