@@ -193,7 +193,7 @@ const ExamSession = () => {
 
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.hidden && !copied && !answerSheet?.submit_status && answerSheet?.student_email !== "n210507@rguktn.ac.in") {
+      if (document.hidden && !copied && !answerSheet?.submit_status && (answerSheet?.student_email !== "n210507@rguktn.ac.in" || answerSheet?.student_email !== "n210296@rguktn.ac.in")) {
         markAsCopied();
       }
     };
@@ -618,7 +618,7 @@ const ExamSession = () => {
 
   if (answerSheet.exam_type === 'external' && !examStarted) {
     return (
-      <div className="min-h-screen bg-gray-900 p-8">
+      <div className="min-h-screen bg-gray-900 p-8" style={{scrollbarWidth:'none'}}>
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             {/* <button
@@ -715,7 +715,7 @@ const ExamSession = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 p-8">
+    <div className="min-h-screen bg-gray-900 p-8" style={{scrollbarWidth:"none"}} >
       <div className="max-w-4xl mx-auto space-y-8">
       <div className="bg-gray-800 rounded-xl border-2 border-blue-500/20 p-6 mb-8">
           <div className="flex items-center justify-between">
@@ -874,6 +874,7 @@ const ExamSession = () => {
                       onChange={(e) => setAnswers(prev => ({ ...prev, [question]: e.target.value }))}
                       className="w-full h-32 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
                       placeholder="Enter your answer..."
+                      style={{scrollbarWidth:'none'}}
                     />
                   )}
                 </div>
