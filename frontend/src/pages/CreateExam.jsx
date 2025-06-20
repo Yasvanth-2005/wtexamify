@@ -183,8 +183,8 @@ const CreateExam = () => {
               >
                 <option value="internal">Internal</option>
                 <option value="external">External</option>
-                <option value="viva">Viva</option>
-                <option value="coaviva">COA-Viva</option>
+                <option value="viva">10-Viva</option>
+                <option value="coaviva">15-Viva</option>
               </select>
             </div>
 

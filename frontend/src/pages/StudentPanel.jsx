@@ -124,7 +124,7 @@ const StudentPanel = () => {
                 <div className="flex justify-between items-start">
                   <h2 className="text-xl font-semibold text-white">{exam.name}</h2>
                   <span className="px-2 py-1 text-sm rounded-full bg-blue-500/20 text-blue-400">
-                    {exam.exam_type}
+                    {exam.exam_type === "coaviva" ? "15 Viva" : exam.exam_type}
                   </span>
                 </div>
                 <div className="space-y-2 text-gray-300">
