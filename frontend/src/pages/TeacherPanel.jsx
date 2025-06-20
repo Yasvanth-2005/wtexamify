@@ -414,7 +414,7 @@ const TeacherPanel = () => {
                 <div className="flex justify-between items-start">
                   <h2 className="text-xl font-semibold text-white">{exam.name}</h2>
                   <span className="px-2 py-1 text-sm rounded-full bg-blue-500/20 text-blue-400">
-                    {exam.exam_type}
+                    {exam.exam_type === "coaviva" ? "15 Viva" : exam.exam_type}
                   </span>
                 </div>
                 <div className="space-y-2 text-gray-300">
@@ -603,7 +603,7 @@ const TeacherPanel = () => {
                       <div className="flex justify-between items-center mb-4">
                         <h3 className="text-lg font-medium text-white">Set {set.set_number} / {questionSets.length}</h3>
                         <span className="px-2 py-1 text-sm rounded-full bg-blue-500/20 text-blue-400">
-                          {set.exam_type}
+                          {set.exam_type === "coaviva" ? "15 Viva" : set.exam_type}
                         </span>
                       </div>
                       <div className="space-y-3">
