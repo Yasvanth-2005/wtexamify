@@ -24,7 +24,7 @@ Examify RGUKT is a modern, secure, and intelligent online exam platform designed
 ### 👨‍🏫 Teacher Panel
 
 - 🔐 **Normal Email Login**: Teachers can log in using any valid email address.
-- 📝 **Create Exams**: Supports creation of Internal, External, and 10/15-bit Viva exams.
+- 📝 **Create Exams**: Supports creation of Internal/External (Every 3 quens as one set), and 10/15-bit Viva exams.
 - ▶️ **Start/Stop Exams**: Full control over when to begin or end an exam session.
 - 📡 **Live Monitoring**: Teachers can manually refresh student questions in real time if needed.
 - 🧾 **Answer Script Access**: View student submissions as PDFs along with AI-evaluated scores.
@@ -59,7 +59,61 @@ Examify RGUKT is a modern, secure, and intelligent online exam platform designed
 - 🍃 **Database**: MongoDB
 
 # 🌟 Working Model 
+### 🔐 Login
+- 🎓 **RGUKT Email**: Grants access to the **Student Panel**
+- 👨‍🏫 **Any Valid Email**: Grants access to the **Teacher Panel**
+<img width="500" alt="Screenshot 2025-06-20 at 09 55 20" src="https://github.com/user-attachments/assets/ca8fda55-99aa-46d8-9294-d0ea3a578307" />
+
 ### 👨‍🏫 Teacher Panel
+- Available exams
+<img width="500" alt="Screenshot 2025-06-20 at 10 10 15" src="https://github.com/user-attachments/assets/088236de-9bdc-4d27-a194-8adf79cde944" />
+
+- Create Exam
+
+<img width="500" alt="Screenshot 2025-06-20 at 10 59 29" src="https://github.com/user-attachments/assets/833c4261-2e9d-4c71-a58e-4f6a6ff1c851" />
+
+- Other Featuers
+<img width="500" alt="Screenshot 2025-06-20 at 10 07 16" src="https://github.com/user-attachments/assets/01f9bece-f819-4e45-8703-c2c182d5e211" />
+<img width="500" alt="Screenshot 2025-06-20 at 10 07 41" src="https://github.com/user-attachments/assets/d2d67e75-072a-4f9b-93c9-470688b27104" />
+<img width="500" alt="Screenshot 2025-06-20 at 10 07 55" src="https://github.com/user-attachments/assets/ad5c86d7-7b70-4b5a-817e-eca2e007a76f" />
+
+### 👩‍🎓 Student Panel
+- Available Exams
+
+<img width="500" alt="Screenshot 2025-06-20 at 10 15 22" src="https://github.com/user-attachments/assets/175308c7-0280-44af-8ba1-e7b69f687512" />
+
+- Internal Exam
+
+<img width="500" alt="Screenshot 2025-06-20 at 10 15 37" src="https://github.com/user-attachments/assets/0bfe9228-3756-4155-aab4-b488ea3f15e5" />
+
+- External Exam
+
+<img width="500" alt="Screenshot 2025-06-20 at 10 15 55" src="https://github.com/user-attachments/assets/023d2ecf-a005-429b-b68e-6c701edeb84d" />
+<img width="500" alt="Screenshot 2025-06-20 at 10 16 14" src="https://github.com/user-attachments/assets/77fae7a5-399d-4132-a48a-a355e0c6621f" />
+
+- Exam Integrity
+
+<img width="500" alt="Screenshot 2025-06-20 at 10 16 24" src="https://github.com/user-attachments/assets/d3be4d99-62bf-4a3a-a046-e8c965ccaeda" />
+<img width="500" alt="Screenshot 2025-06-20 at 10 16 35" src="https://github.com/user-attachments/assets/90e7fa7a-381c-43fa-9c93-4ab892440219" />
+
+- 🧠 Ai Evaluation
+
+<img width="500" alt="Screenshot 2025-06-20 at 10 17 36" src="https://github.com/user-attachments/assets/ffe52371-ba72-4969-870a-8d08794b5ebe" />
+<img width="500" alt="Screenshot 2025-06-20 at 10 17 48" src="https://github.com/user-attachments/assets/130bec68-2db6-47e9-b727-f0baaad0dd63" />
+<img width="500" alt="Screenshot 2025-06-20 at 10 17 56" src="https://github.com/user-attachments/assets/fbb35ef7-5868-4926-9ed8-1b75ccc98ace" />
+
+- Viva
+<img width="500" alt="Screenshot 2025-06-20 at 10 18 10" src="https://github.com/user-attachments/assets/de467860-c862-47fe-838c-ca248f9e983c" />
+
+
+
+
+
+
+
+
+
+
 
 
 
