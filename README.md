@@ -6,6 +6,20 @@ Examify RGUKT is a modern, secure, and intelligent online exam platform designed
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
 
+## 🙏 Special Thanks
+
+This project, **Examify RGUKT**, was built on the request of [**Vasu Neninthe Sir**](https://www.linkedin.com/in/vasu-neninthe/), who entrusted me with the opportunity to develop a full-fledged online exam platform tailored for RGUKT.
+
+Thanks to his guidance and support, **we successfully conducted real-time exams** for over **180+ students** across two subjects:
+
+- 🌐 **Web Technologies** – External Exam & 10-bit Viva  
+- 🧠 **Computer Organization & Architecture** – 15-bit Viva  
+
+This experience not only made the platform come alive in a real educational environment, but also helped validate its robustness, scalability, and usefulness in a real academic setting.
+
+Thank you, sir, for believing in this project!
+
+
  
 # 🚀 Deployment
 [![Live Site](https://img.shields.io/badge/🚀%20Live%20Site-Examify-8B1F1F?style=for-the-badge&logo=vercel&logoColor=white)](https://examifyrgukt.vercel.app/)
@@ -109,7 +123,11 @@ Examify RGUKT is a modern, secure, and intelligent online exam platform designed
 
 
 
+### 📬 Contact Me
 
+- 📧 **Email**: [maheshkarri2109@gmail.com](mailto:maheshkarri2109@gmail.com)
+- 📱 **Phone**: +91-8008791096
+- 💼 **LinkedIn**: [linkedin.com/in/maheshkarri4444](https://www.linkedin.com/in/maheshkarri4444/)
 
 
 
