@@ -16,6 +16,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+func TimeHandler(c *gin.Context) {
+	loc, _ := time.LoadLocation("Asia/Kolkata")
+	now := time.Now().In(loc)
+
+	c.JSON(200, gin.H{
+		"timestamp": now.UnixMilli(),
+		"iso":       now.Format(time.RFC3339),
+	})
+}
+
 var answerSheetCollection *mongo.Collection = config.GetCollection(config.Client, "answersheets")
 
 func CreateAnswerSheet(c *gin.Context) {

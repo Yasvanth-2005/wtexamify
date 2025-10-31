@@ -21,13 +21,15 @@ type ChatResponse struct {
 }
 
 func RunChat(prompt string, chatHistory []string) (string, error) {
-	apiKey := "AIzaSyDm3hTezn0HsU56c_U5FpbWvxTCiuCXGS8"
+	apiKey := "AIzaSyDkKH1JLBQpMJFOGkmFjzfN-_m8FbuxZM8"
 	if apiKey == "" {
 		return "", fmt.Errorf("API key is missing")
 	}
 
 	// Use the correct model: gemini-2.0-flash
-	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=%s", apiKey)
+	// url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=%s", apiKey)
+	model := "gemini-2.5-flash"
+	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s", model, apiKey)
 
 	// Prepare JSON payload
 	requestBody := map[string]interface{}{

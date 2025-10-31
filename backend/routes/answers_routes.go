@@ -18,6 +18,8 @@ func AnswerSheetRoutes(router *gin.Engine) {
 		answersheet.GET("/submitted/:examID", middleware.TeacherMiddleware(), controllers.GetAllSubmittedAnswerSheets)
 		answersheet.GET("/:id", middleware.StudentOrTeacherMiddleware(), controllers.GetAnswerSheetByID)
 
+		answersheet.GET("/time", controllers.TimeHandler)
+
 	}
 
 	router.GET("/watch/answersheets", controllers.WatchAnswerSheets) // WebSocket connection
