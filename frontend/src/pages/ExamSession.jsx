@@ -156,8 +156,17 @@ const ExamSession = () => {
         setCopied(answerSheetData.answerSheet.copied || false);
 
         if (answerSheetData.answerSheet.duration) {
+
           const startTime = new Date(answerSheetData.answerSheet.created_at.$date || answerSheetData.answerSheet.created_at).getTime();
-          const currentTime = new Date().getTime();
+  
+          const res = await fetch(Allapi.getTime.url,{
+            method: "GET"
+          });
+          const data = await res.json();
+          const currentTime = new Date(data.timestamp).getTime();
+          console.log("IST time current time:", currentTime);
+          const currentTime2 = new Date().getTime();
+          console.log("current time 2",currentTime2);
           const elapsedTime = Math.floor((currentTime - startTime) / 1000);
           const remainingTime = Math.max(0, answerSheetData.answerSheet.duration * 60 - elapsedTime);
           setTimeLeft(remainingTime);

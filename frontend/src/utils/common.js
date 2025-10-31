@@ -81,6 +81,10 @@ const Allapi = {
     url: `${backapi}/ai/generate`,
     method: "POST",
   },
+  getTime:{
+    url:`${backapi}/answersheets/time`,
+    method:"GET",
+  },
   backapi,
 };
 
