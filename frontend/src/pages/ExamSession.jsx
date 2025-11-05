@@ -202,19 +202,19 @@ const ExamSession = () => {
 
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.hidden && !copied && !answerSheet?.submit_status && (answerSheet?.student_email !== "n210507@rguktn.ac.in") ) {
+      if (document.hidden && !copied && !answerSheet?.submit_status  ) {
         markAsCopied();
       }
     };
 
     const handleResize = () => {
-      if (!copied && !answerSheet?.submit_status && (answerSheet?.student_email !== "n210507@rguktn.ac.in")  ) {
+      if (!copied && !answerSheet?.submit_status  ) {
         markAsCopied();
       }
     };
 
     const handleBeforeUnload = (e) => {
-      if (!copied && !answerSheet?.submit_status && (answerSheet?.student_email !== "n210507@rguktn.ac.in")  ) {
+      if (!copied && !answerSheet?.submit_status  ) {
         e.preventDefault();
         markAsCopied();
         e.returnValue = '';
@@ -222,7 +222,7 @@ const ExamSession = () => {
     };
 
     const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v') && !copied && !answerSheet?.submit_status && answerSheet?.student_email !== "n210507@rguktn.ac.in") {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v') && !copied && !answerSheet?.submit_status ) {
         markAsCopied();
       }
     };
@@ -241,7 +241,7 @@ const ExamSession = () => {
   }, [copied, answerSheet]);
 
   const handleRefreshQuestions = async () => {
-    if (refreshCode !== 'rguktnuzvid') {
+    if (refreshCode !== 'labexamsrgukt') {
       toast.error('Invalid refresh code');
       return;
     }
