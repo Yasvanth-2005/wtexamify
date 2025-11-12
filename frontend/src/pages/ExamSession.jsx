@@ -97,73 +97,6 @@ const ExamSession = () => {
     fetchData();
   }, [answerSheetId, navigate]);
 
-  useEffect(() => {
-    if (timeLeft === null) return;
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          handleSubmit();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [timeLeft]);
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      // Keep detection active even if copied is true - only check if exam is submitted
-      if (document.hidden && !answerSheet?.submit_status) {
-        markAsCopied();
-      }
-    };
-
-    const handleResize = () => {
-      // Keep detection active even if copied is true
-      if (!answerSheet?.submit_status) {
-        markAsCopied();
-      }
-    };
-
-    const handleBeforeUnload = (e) => {
-      // Block page reload until exam is submitted (regardless of exam status - start/stop)
-      // Students can submit even after teacher stops the exam, but cannot reload until submitted
-      if (!answerSheet?.submit_status) {
-        e.preventDefault();
-        markAsCopied();
-        e.returnValue =
-          "You cannot reload the page until you submit the exam. Your progress will be lost.";
-      }
-    };
-
-    const handleKeyDown = (e) => {
-      // Keep detection active even if copied is true
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        (e.key === "c" || e.key === "v") &&
-        !answerSheet?.submit_status
-      ) {
-        markAsCopied();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("resize", handleResize);
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("resize", handleResize);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [answerSheet, markAsCopied]); // Include markAsCopied in dependencies
-
   const handleRefreshQuestions = async () => {
     if (refreshCode !== "labexamsrgukt") {
       toast.error("Invalid refresh code");
@@ -196,6 +129,192 @@ const ExamSession = () => {
       setRefreshLoading(false);
     }
   };
+
+  const evaluateAnswers = useCallback(async () => {
+    setAiEvaluating(true);
+    let finalAiScore = null;
+    const statuses = [];
+
+    try {
+      // Evaluate each answer individually
+      for (let i = 0; i < answerSheet.data.length; i++) {
+        const question = Object.keys(answerSheet.data[i])[0];
+        const answer = answers[question] || "";
+
+        // Check if question is about code execution (contains code-related keywords)
+        const isCodeQuestion =
+          /function|code|program|syntax|execute|run|console|log|var|let|const|if|else|for|while|return/i.test(
+            question
+          ) ||
+          /function|code|program|syntax|execute|run|console|log|var|let|const|if|else|for|while|return/i.test(
+            answer
+          );
+
+        let prompt;
+        if (isCodeQuestion) {
+          // For code questions, check if it will execute
+          prompt = `Analyze the following code in relation to the question and check if it will execute syntactically. Return ONLY one of these two exact phrases: "will execute" or "will not execute". No other text should be included.
+
+Question: ${question}
+Answer (code): ${answer}`;
+        } else {
+          // For conceptual questions, evaluate the quality of the answer
+          prompt = `Evaluate the following answer for the given question. Determine if the answer is correct and complete. Return ONLY one of these two exact phrases: "will execute" (meaning correct/complete answer) or "will not execute" (meaning incorrect/incomplete answer). No other text should be included.
+
+Question: ${question}
+Answer: ${answer}`;
+        }
+
+        const statusResponse = await fetch(Allapi.aiScore.url, {
+          method: "POST",
+          headers: {
+            Authorization: localStorage.getItem("token"),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ prompt }),
+        });
+
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
+          const responseText = statusData.response?.trim().toLowerCase() || "";
+
+          // Properly check if response is valid
+          if (
+            responseText === "will execute" ||
+            responseText === "will not execute"
+          ) {
+            statuses.push({
+              questionNumber: i + 1,
+              status: responseText,
+            });
+          } else {
+            // If AI returns invalid response, default to "will not execute"
+            console.warn(
+              `Invalid AI response for question ${i + 1}:`,
+              responseText
+            );
+            statuses.push({
+              questionNumber: i + 1,
+              status: "will not execute",
+            });
+          }
+        } else {
+          // If API call fails, default to "will not execute"
+          console.error(`AI evaluation failed for question ${i + 1}`);
+          statuses.push({
+            questionNumber: i + 1,
+            status: "will not execute",
+          });
+        }
+      }
+
+      // Calculate final score
+      const questions = answerSheet.data.map((item) => Object.keys(item)[0]);
+
+      const scoreResponse = await fetch(Allapi.aiScore.url, {
+        method: "POST",
+        headers: {
+          Authorization: localStorage.getItem("token"),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: `Based on these answers for the questions in this data ${questions}, provide a single numerical score out of 100. Only return the number: ${JSON.stringify(
+            answers
+          )}`,
+        }),
+      });
+
+      if (scoreResponse.ok) {
+        const scoreData = await scoreResponse.json();
+        const scoreText = scoreData.response?.trim() || "";
+
+        // Extract number from response (handle cases where AI returns text with number)
+        const scoreMatch = scoreText.match(/\d+(\.\d+)?/);
+        if (scoreMatch) {
+          finalAiScore = parseFloat(scoreMatch[0]);
+          // Ensure score is between 0 and 100
+          if (finalAiScore > 100) finalAiScore = 100;
+          if (finalAiScore < 0) finalAiScore = 0;
+        } else {
+          console.warn("Could not extract score from AI response:", scoreText);
+          finalAiScore = 0;
+        }
+      } else {
+        console.error("Failed to get AI score");
+        finalAiScore = 0;
+      }
+
+      setAiAnswerStatus(statuses);
+      setAiScore(finalAiScore);
+      setShowResults(true);
+      return finalAiScore;
+    } catch (error) {
+      console.error("AI evaluation failed:", error);
+      return null;
+    } finally {
+      setAiEvaluating(false);
+    }
+  }, [answerSheet, answers]);
+
+  const handleSubmit = useCallback(async () => {
+    // Allow submission even if exam status is "stop" - students can submit after teacher stops exam
+    try {
+      let aiScore = null;
+
+      if (
+        answerSheet?.exam_type === "external" ||
+        answerSheet?.exam_type === "viva" ||
+        answerSheet?.exam_type === "coaviva"
+      ) {
+        aiScore = await evaluateAnswers();
+      }
+
+      const formattedAnswers = answerSheet.data.map((questionObj) => {
+        const question = Object.keys(questionObj)[0];
+        return {
+          [question]: answers[question]
+            ? answers[question].replace(/\r\n/g, "\n")
+            : "",
+        };
+      });
+
+      setLoading(true);
+      const response = await fetch(Allapi.submitAnswerSheet.url, {
+        method: "PUT",
+        headers: {
+          Authorization: localStorage.getItem("token"),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          answer_sheet_id: answerSheetId,
+          answers: formattedAnswers,
+          ai_score: aiScore,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to submit answer sheet");
+
+      toast.success("Exam submitted successfully");
+      setLoading(false);
+      setAnswerSheet((prevState) => ({
+        ...prevState,
+        submit_status: true,
+      }));
+
+      if (
+        answerSheet?.exam_type === "viva" ||
+        answerSheet?.exam_type === "external" ||
+        answerSheet?.exam_type === "coaviva"
+      ) {
+        setShowResults(true);
+      } else {
+        navigate("/student");
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to submit exam");
+      setLoading(false);
+    }
+  }, [answerSheet, answers, answerSheetId, evaluateAnswers, navigate]);
 
   const markAsCopied = useCallback(() => {
     // Prevent if exam is already submitted
@@ -256,7 +375,171 @@ const ExamSession = () => {
 
       return newCopyCount;
     });
-  }, [answerSheet, answerSheetId]);
+  }, [answerSheet, answerSheetId, handleSubmit]);
+
+  // Move useEffect hooks that depend on markAsCopied and handleSubmit here
+  useEffect(() => {
+    if (timeLeft === null) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          handleSubmit();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft, handleSubmit]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      // Keep detection active even if copied is true - only check if exam is submitted
+      if (document.hidden && !answerSheet?.submit_status) {
+        markAsCopied();
+      }
+    };
+
+    const handleBlur = () => {
+      // Detect when window loses focus (Alt+Tab, clicking away, etc.)
+      if (!answerSheet?.submit_status) {
+        // Small delay to avoid false positives from legitimate clicks within the page
+        setTimeout(() => {
+          if (!document.hasFocus() && !answerSheet?.submit_status) {
+            markAsCopied();
+          }
+        }, 150);
+      }
+    };
+
+    const handleFocus = () => {
+      // When window regains focus, we can track this for analytics
+      // The blur event already handles the detection
+    };
+
+    const handleResize = () => {
+      // Keep detection active even if copied is true
+      if (!answerSheet?.submit_status) {
+        markAsCopied();
+      }
+    };
+
+    const handleBeforeUnload = (e) => {
+      // Block page reload until exam is submitted (regardless of exam status - start/stop)
+      // Students can submit even after teacher stops the exam, but cannot reload until submitted
+      if (!answerSheet?.submit_status) {
+        e.preventDefault();
+        markAsCopied();
+        e.returnValue =
+          "You cannot reload the page until you submit the exam. Your progress will be lost.";
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      // Keep detection active even if copied is true
+      if (answerSheet?.submit_status) return;
+
+      // Detect copy/paste shortcuts
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === "c" || e.key === "v" || e.key === "x" || e.key === "a")
+      ) {
+        markAsCopied();
+        return;
+      }
+
+      // Detect tab/window switching shortcuts
+      // Ctrl+Tab, Ctrl+Shift+Tab (browser tab switching)
+      if ((e.ctrlKey || e.metaKey) && e.key === "Tab") {
+        markAsCopied();
+        return;
+      }
+
+      // Ctrl+Shift+Tab (previous tab in browser)
+      if (e.ctrlKey && e.shiftKey && e.key === "Tab") {
+        markAsCopied();
+        return;
+      }
+
+      // Alt+Tab, Alt+Shift+Tab (OS window switching)
+      if (e.altKey && e.key === "Tab") {
+        markAsCopied();
+        return;
+      }
+
+      // Win+Tab (Windows task view) - Windows key + Tab
+      // On Windows, this is usually detected via blur/visibilitychange, but we catch it here too
+      if (e.metaKey && e.key === "Tab") {
+        markAsCopied();
+        return;
+      }
+
+      // Ctrl+Shift+N (incognito/private window)
+      if (e.ctrlKey && e.shiftKey && (e.key === "n" || e.key === "N")) {
+        markAsCopied();
+        return;
+      }
+
+      // Ctrl+Shift+P (private window in Firefox)
+      if (e.ctrlKey && e.shiftKey && (e.key === "p" || e.key === "P")) {
+        markAsCopied();
+        return;
+      }
+
+      // PageUp/PageDown with Ctrl (sometimes used for tab switching)
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === "PageUp" || e.key === "PageDown")
+      ) {
+        markAsCopied();
+        return;
+      }
+
+      // Detect new tab, close tab shortcuts
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === "t" || e.key === "w" || e.key === "n" || e.key === "T")
+      ) {
+        markAsCopied();
+        return;
+      }
+
+      // Detect refresh shortcuts
+      if (
+        e.key === "F5" ||
+        ((e.ctrlKey || e.metaKey) && e.key === "r") ||
+        ((e.ctrlKey || e.metaKey) && e.key === "R")
+      ) {
+        markAsCopied();
+        return;
+      }
+
+      // Detect Alt+F4 (close window)
+      if (e.altKey && e.key === "F4") {
+        markAsCopied();
+        return;
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [answerSheet, markAsCopied]); // Include markAsCopied in dependencies
 
   const handleRemoveCopied = async () => {
     try {
@@ -286,147 +569,10 @@ const ExamSession = () => {
     }
   };
 
-  const evaluateAnswers = async () => {
-    setAiEvaluating(true);
-    let finalAiScore = null;
-    const statuses = [];
-
-    try {
-      // Evaluate each answer individually
-      for (let i = 0; i < answerSheet.data.length; i++) {
-        const question = Object.keys(answerSheet.data[i])[0];
-        const answer = answers[question] || "";
-
-        const statusResponse = await fetch(Allapi.aiScore.url, {
-          method: "POST",
-          headers: {
-            Authorization: localStorage.getItem("token"),
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            prompt: `Analyze the following code in relation to the question and analyze syntactically "${question}". Return only strictly!! "will execute" or "will not execute". No other text should be included.
-
-            Question: ${question}
-            Answer: ${answer}`,
-          }),
-        });
-
-        if (statusResponse.ok) {
-          const statusData = await statusResponse.json();
-          if (
-            statusData.response.trim().toLowerCase() ==
-            ("will execute" || "will not execute")
-          ) {
-            statuses.push({
-              questionNumber: i + 1,
-              status: statusData.response.trim().toLowerCase(),
-            });
-          } else {
-            statuses.push({
-              questionNumber: i + 1,
-              status: "will not execute",
-            });
-          }
-        }
-      }
-
-      // Calculate final score
-      const questions = answerSheet.data.map((item) => Object.keys(item)[0]);
-
-      const scoreResponse = await fetch(Allapi.aiScore.url, {
-        method: "POST",
-        headers: {
-          Authorization: localStorage.getItem("token"),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: `Based on these answers for the questions in this data ${questions}, provide a single numerical score out of 100. Only return the number: ${JSON.stringify(
-            answers
-          )}`,
-        }),
-      });
-
-      if (scoreResponse.ok) {
-        const scoreData = await scoreResponse.json();
-        finalAiScore = parseFloat(scoreData.response);
-      }
-
-      setAiAnswerStatus(statuses);
-      setAiScore(finalAiScore);
-      setShowResults(true);
-      return finalAiScore;
-    } catch (error) {
-      console.error("AI evaluation failed:", error);
-      return null;
-    } finally {
-      setAiEvaluating(false);
-    }
-  };
-
   const formatEmail = (email) => {
     if (!email) return "";
     const [prefix, domain] = email.split("@");
     return `${prefix.toUpperCase()}@${domain}`;
-  };
-
-  const handleSubmit = async () => {
-    // Allow submission even if exam status is "stop" - students can submit after teacher stops exam
-    try {
-      let aiScore = null;
-
-      if (
-        answerSheet?.exam_type === "external" ||
-        answerSheet?.exam_type === "viva" ||
-        answerSheet?.exam_type === "coaviva"
-      ) {
-        aiScore = await evaluateAnswers();
-      }
-
-      const formattedAnswers = answerSheet.data.map((questionObj) => {
-        const question = Object.keys(questionObj)[0];
-        return {
-          [question]: answers[question]
-            ? answers[question].replace(/\r\n/g, "\n")
-            : "",
-        };
-      });
-
-      setLoading(true);
-      const response = await fetch(Allapi.submitAnswerSheet.url, {
-        method: "PUT",
-        headers: {
-          Authorization: localStorage.getItem("token"),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          answer_sheet_id: answerSheetId,
-          answers: formattedAnswers,
-          ai_score: aiScore,
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to submit answer sheet");
-
-      toast.success("Exam submitted successfully");
-      setLoading(false);
-      setAnswerSheet((prevState) => ({
-        ...prevState,
-        submit_status: true,
-      }));
-
-      if (
-        answerSheet?.exam_type === "viva" ||
-        answerSheet?.exam_type === "external" ||
-        answerSheet?.exam_type === "coaviva"
-      ) {
-        setShowResults(true);
-      } else {
-        navigate("/student");
-      }
-    } catch (error) {
-      toast.error(error.message || "Failed to submit exam");
-      setLoading(false);
-    }
   };
 
   const formatTime = (seconds) => {
@@ -585,7 +731,15 @@ const ExamSession = () => {
               value={passcode}
               onChange={(e) => setPasscode(e.target.value)}
               placeholder="Enter passcode"
-              autocomplete="new-password"
+              autoComplete="off"
+              spellCheck="false"
+              data-form-type="other"
+              data-lpignore="true"
+              data-1p-ignore="true"
+              data-dashlane-ignore="true"
+              data-bitwarden-watching="false"
+              name="passcode-field"
+              id="passcode-field"
               className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
             />
             <button
@@ -684,7 +838,15 @@ const ExamSession = () => {
                 value={refreshCode}
                 onChange={(e) => setRefreshCode(e.target.value)}
                 placeholder="Enter refresh code"
-                autocomplete="new-password"
+                autoComplete="off"
+                spellCheck="false"
+                data-form-type="other"
+                data-lpignore="true"
+                data-1p-ignore="true"
+                data-dashlane-ignore="true"
+                data-bitwarden-watching="false"
+                name="refresh-code-field"
+                id="refresh-code-field"
                 className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 mb-4"
               />
               <div className="flex justify-end gap-2">
