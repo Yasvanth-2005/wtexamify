@@ -21,11 +21,22 @@ const GoogleCallback = () => {
           throw new Error(data.error || 'Authentication failed');
         }
 
+        console.log('Auth response:', data); // Debug log
+
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
 
         toast.success('Successfully logged in!');
-        navigate(`/${data.user.role}`);
+        
+        // Navigate based on user role
+        if (data.user && data.user.role) {
+          const targetPath = `/${data.user.role}`;
+          console.log('Navigating to:', targetPath); // Debug log
+          navigate(targetPath, { replace: true });
+        } else {
+          console.error('User role not found in response:', data);
+          navigate('/login', { replace: true });
+        }
       } catch (error) {
         console.error('Authentication error:', error);
         toast.error('Authentication failed');

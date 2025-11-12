@@ -1,14 +1,12 @@
-const backends = [
-  "https://wtexamifybackend1.onrender.com",
-  "https://wtexamifybackend2.onrender.com",
-];
-
 // const backends = [
-//   "http://localhost:8080",
-//   "http://localhost:8080",
+//   "https://wtexamifybackend1.onrender.com",
+//   "https://wtexamifybackend2.onrender.com",
 // ];
 
-const getRandomBackend = () => backends[Math.floor(Math.random() * backends.length)];
+const backends = ["http://localhost:8080", "http://localhost:8080"];
+
+const getRandomBackend = () =>
+  backends[Math.floor(Math.random() * backends.length)];
 
 const backapi = getRandomBackend();
 
@@ -81,9 +79,9 @@ const Allapi = {
     url: `${backapi}/ai/generate`,
     method: "POST",
   },
-  getTime:{
-    url:`${backapi}/answersheets/time`,
-    method:"GET",
+  getTime: {
+    url: `${backapi}/answersheets/time`,
+    method: "GET",
   },
   backapi,
 };

@@ -1,125 +1,30 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import { RefreshCw, Brain, ArrowLeft } from 'lucide-react';
-import Allapi from '../utils/common';
-import CodeMirror from '@uiw/react-codemirror';
-import { javascript } from '@codemirror/lang-javascript';
-import { dracula } from '@uiw/codemirror-theme-dracula';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { RefreshCw, Brain, ArrowLeft } from "lucide-react";
+import Allapi from "../utils/common";
+import CodeMirror from "@uiw/react-codemirror";
+import { javascript } from "@codemirror/lang-javascript";
+import { dracula } from "@uiw/codemirror-theme-dracula";
 import { TypeAnimation } from "react-type-animation";
 
 function capitalize(str) {
-  return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+  return str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
 }
-
-const formatAiRemarks = (text) => {
-  if (!text) return null;
-
-  // Split the text into sections based on "Question" markers
-  const sections = text.split(/\*\*Question \d+:\*\*/g).filter(Boolean);
-  
-  if (sections.length === 0) {
-    // If no question sections found, return the text as a single formatted block
-    return (
-      <div className="space-y-4">
-        {text.split('\n').map((line, index) => {
-          // Check for special formatting cases
-          if (line.toLowerCase().includes('overall:') || line.toLowerCase().startsWith('overall,')) {
-            return (
-              <p key={index} className="text-yellow-400 font-medium mt-4">
-                {line.replace(/\*\*/g, '')}
-              </p>
-            );
-          }
-
-          // Color code based on sentiment
-          const isPositive = line.toLowerCase().includes('correct') || 
-                           line.toLowerCase().includes('good') || 
-                           line.toLowerCase().includes('excellent');
-          const isNegative = line.toLowerCase().includes('incorrect') || 
-                           line.toLowerCase().includes('error') || 
-                           line.toLowerCase().includes('needs improvement') ||
-                           line.toLowerCase().includes('lack of') ||
-                           line.toLowerCase().includes('nonsensical');
-          
-          const textColor = isPositive ? 'text-green-400' : 
-                          isNegative ? 'text-red-400' : 
-                          'text-gray-300';
-
-          return (
-            <p key={index} className={`${textColor}`}>
-              {line.replace(/\*\*/g, '')}
-            </p>
-          );
-        })}
-      </div>
-    );
-  }
-
-  // Process text with question sections
-  return (
-    <div className="space-y-6">
-      {sections.map((section, index) => {
-        const cleanText = section.trim();
-        const lines = cleanText.split('\n').filter(line => line.trim());
-        
-        return (
-          <div key={index} className="space-y-2">
-            {/* <h4 className="text-lg font-semibold text-blue-400">
-              Question {index + 1}:
-            </h4> */}
-            <div className="pl-4 border-l-2 border-gray-700 space-y-2">
-              {lines.map((line, lineIndex) => {
-                // Handle special formatting
-                if (line.toLowerCase().includes('overall:') || line.toLowerCase().startsWith('overall,')) {
-                  return (
-                    <p key={lineIndex} className="text-yellow-400 font-medium mt-4">
-                      {line.replace(/\*\*/g, '')}
-                    </p>
-                  );
-                }
-                
-                // Color code based on sentiment
-                const isPositive = line.toLowerCase().includes('correct') || 
-                                 line.toLowerCase().includes('good') || 
-                                 line.toLowerCase().includes('excellent');
-                const isNegative = line.toLowerCase().includes('incorrect') || 
-                                 line.toLowerCase().includes('error') || 
-                                 line.toLowerCase().includes('needs improvement') ||
-                                 line.toLowerCase().includes('lack of') ||
-                                 line.toLowerCase().includes('nonsensical');
-                
-                const textColor = isPositive ? 'text-green-400' : 
-                                isNegative ? 'text-red-400' : 
-                                'text-gray-300';
-                
-                return (
-                  <p key={lineIndex} className={textColor}>
-                    {line.replace(/\*\*/g, '')}
-                  </p>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
-
 const ExamSession = () => {
   const { id: answerSheetId } = useParams();
   const navigate = useNavigate();
   const [answerSheet, setAnswerSheet] = useState(null);
   const [answers, setAnswers] = useState({});
   const [copied, setCopied] = useState(false);
-  const [passcode, setPasscode] = useState('');
+  const [localCopyCount, setLocalCopyCount] = useState(0); // Local counter for cheating detection
+  const lastViolationTimeRef = useRef(0); // Prevent rapid duplicate triggers
+  const [passcode, setPasscode] = useState("");
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState(null);
   const [showRefreshModal, setShowRefreshModal] = useState(false);
-  const [refreshCode, setRefreshCode] = useState('');
+  const [refreshCode, setRefreshCode] = useState("");
   const [refreshLoading, setRefreshLoading] = useState(false);
   const [copyLoading, setCopyLoading] = useState(false);
   const [aiEvaluating, setAiEvaluating] = useState(false);
@@ -127,26 +32,29 @@ const ExamSession = () => {
   const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
   const [examStarted, setExamStarted] = useState(false);
   const [aiAnswerStatus, setAiAnswerStatus] = useState([]);
-  const [aiRemarks, setAiRemarks] = useState('');
   const [showResults, setShowResults] = useState(false);
-  const user = JSON.parse(localStorage.getItem('user'));
+  const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const answerSheetResponse = await fetch(Allapi.getAnswerSheetById.url(answerSheetId), {
-          headers: {
-            'Authorization': localStorage.getItem('token')
+        const answerSheetResponse = await fetch(
+          Allapi.getAnswerSheetById.url(answerSheetId),
+          {
+            headers: {
+              Authorization: localStorage.getItem("token"),
+            },
           }
-        });
-        
-        if (!answerSheetResponse.ok) throw new Error('Failed to fetch answer sheet');
+        );
+
+        if (!answerSheetResponse.ok)
+          throw new Error("Failed to fetch answer sheet");
         const answerSheetData = await answerSheetResponse.json();
         setAnswerSheet(answerSheetData.answerSheet);
 
         if (answerSheetData.answerSheet.data) {
           const initialAnswers = {};
-          answerSheetData.answerSheet.data.forEach(answer => {
+          answerSheetData.answerSheet.data.forEach((answer) => {
             const question = Object.keys(answer)[0];
             initialAnswers[question] = answer[question];
           });
@@ -154,29 +62,35 @@ const ExamSession = () => {
         }
 
         setCopied(answerSheetData.answerSheet.copied || false);
+        setLocalCopyCount(answerSheetData.answerSheet.copy_count || 0);
 
         if (answerSheetData.answerSheet.duration) {
+          const startTime = new Date(
+            answerSheetData.answerSheet.created_at.$date ||
+              answerSheetData.answerSheet.created_at
+          ).getTime();
 
-          const startTime = new Date(answerSheetData.answerSheet.created_at.$date || answerSheetData.answerSheet.created_at).getTime();
-  
-          const res = await fetch(Allapi.getTime.url,{
-            method: "GET"
+          const res = await fetch(Allapi.getTime.url, {
+            method: "GET",
           });
           const data = await res.json();
           const currentTime = new Date(data.timestamp).getTime();
           console.log("IST time current time:", currentTime);
           const currentTime2 = new Date().getTime();
-          console.log("current time 2",currentTime2);
+          console.log("current time 2", currentTime2);
           const elapsedTime = Math.floor((currentTime - startTime) / 1000);
-          const remainingTime = Math.max(0, answerSheetData.answerSheet.duration * 60 - elapsedTime);
+          const remainingTime = Math.max(
+            0,
+            answerSheetData.answerSheet.duration * 60 - elapsedTime
+          );
           setTimeLeft(remainingTime);
         }
 
         setLoading(false);
       } catch (error) {
-        toast.error('Failed to load exam data');
-        console.error('Error loading exam:', error);
-        navigate('/student');
+        toast.error("Failed to load exam data");
+        console.error("Error loading exam:", error);
+        navigate("/student");
       }
     };
 
@@ -187,7 +101,7 @@ const ExamSession = () => {
     if (timeLeft === null) return;
 
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
+      setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
           handleSubmit();
@@ -202,130 +116,173 @@ const ExamSession = () => {
 
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.hidden && !copied && !answerSheet?.submit_status  ) {
+      // Keep detection active even if copied is true - only check if exam is submitted
+      if (document.hidden && !answerSheet?.submit_status) {
         markAsCopied();
       }
     };
 
     const handleResize = () => {
-      if (!copied && !answerSheet?.submit_status  ) {
+      // Keep detection active even if copied is true
+      if (!answerSheet?.submit_status) {
         markAsCopied();
       }
     };
 
     const handleBeforeUnload = (e) => {
-      if (!copied && !answerSheet?.submit_status  ) {
+      // Block page reload until exam is submitted (regardless of exam status - start/stop)
+      // Students can submit even after teacher stops the exam, but cannot reload until submitted
+      if (!answerSheet?.submit_status) {
         e.preventDefault();
         markAsCopied();
-        e.returnValue = '';
+        e.returnValue =
+          "You cannot reload the page until you submit the exam. Your progress will be lost.";
       }
     };
 
     const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v') && !copied && !answerSheet?.submit_status ) {
+      // Keep detection active even if copied is true
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === "c" || e.key === "v") &&
+        !answerSheet?.submit_status
+      ) {
         markAsCopied();
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [copied, answerSheet]);
+  }, [answerSheet, markAsCopied]); // Include markAsCopied in dependencies
 
   const handleRefreshQuestions = async () => {
-    if (refreshCode !== 'labexamsrgukt') {
-      toast.error('Invalid refresh code');
+    if (refreshCode !== "labexamsrgukt") {
+      toast.error("Invalid refresh code");
       return;
     }
 
     try {
       setRefreshLoading(true);
-      const response = await fetch(Allapi.refreshAnswerSheet.url(answerSheetId), {
-        method: 'PUT',
-        headers: {
-          'Authorization': localStorage.getItem('token')
+      const response = await fetch(
+        Allapi.refreshAnswerSheet.url(answerSheetId),
+        {
+          method: "PUT",
+          headers: {
+            Authorization: localStorage.getItem("token"),
+          },
         }
-      });
-      
-      if (!response.ok) throw new Error('Failed to refresh answer sheet');
-      
+      );
+
+      if (!response.ok) throw new Error("Failed to refresh answer sheet");
+
       const refreshedData = await response.json();
       setAnswerSheet(refreshedData.answerSheet);
       setAnswers({});
       setShowRefreshModal(false);
-      setRefreshCode('');
-      toast.success('Questions refreshed successfully');
+      setRefreshCode("");
+      toast.success("Questions refreshed successfully");
     } catch (error) {
-      toast.error('Failed to refresh questions');
+      toast.error("Failed to refresh questions");
     } finally {
       setRefreshLoading(false);
     }
   };
 
-  const markAsCopied = async () => {
-    if (copied || answerSheet?.submit_status) return;
+  const markAsCopied = useCallback(() => {
+    // Prevent if exam is already submitted
+    if (answerSheet?.submit_status) return;
 
-    try {
-      const newCopyCount = (answerSheet.copy_count || 0) + 1;
-      
-      const response = await fetch(Allapi.assignCopied.url(answerSheetId), {
-        method: 'PUT',
-        headers: {
-          'Authorization': localStorage.getItem('token'),
-        },
-      });
+    // Prevent rapid duplicate triggers (debounce - 2 seconds)
+    const now = Date.now();
+    if (now - lastViolationTimeRef.current < 2000) {
+      return; // Ignore if triggered within 2 seconds of last violation
+    }
+    lastViolationTimeRef.current = now;
 
-      if (!response.ok) throw new Error('Failed to mark as copied');
-      
-      setAnswerSheet(prev => ({
-        ...prev,
-        copy_count: newCopyCount
-      }));
-      
+    // Use local counter for immediate response
+    setLocalCopyCount((prev) => {
+      const newCopyCount = prev + 1;
+
+      // Open modal immediately - don't wait for API
       setCopied(true);
       setShowPasscodeModal(true);
-      
+
+      // Show warning based on local counter
       if (newCopyCount >= 4) {
-        toast.error('Maximum copy attempts reached. Submitting exam...');
+        toast.error("Maximum copy attempts reached. Submitting exam...");
         handleSubmit();
       } else {
-        toast.error(`Warning: ${4 - newCopyCount} chances remaining before automatic submission!`);
+        toast.error(
+          `Warning: ${
+            4 - newCopyCount
+          } chances remaining before automatic submission!`
+        );
       }
-    } catch (error) {
-      console.error('Error marking as copied:', error);
-    }
-  };
 
+      // Send API request in background (fire and forget)
+      // Don't wait for response - modal is already open
+      fetch(Allapi.assignCopied.url(answerSheetId), {
+        method: "PUT",
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        },
+      })
+        .then((response) => {
+          if (response.ok) {
+            return response.json();
+          }
+          throw new Error("Failed to mark as copied");
+        })
+        .then((data) => {
+          // Update answer sheet with server response if successful
+          setAnswerSheet((prevSheet) => ({
+            ...prevSheet,
+            copy_count: data.answerSheet?.copy_count || newCopyCount,
+          }));
+        })
+        .catch((error) => {
+          // Silently handle error - modal is already open, detection continues
+          console.error("Error marking as copied (background):", error);
+        });
+
+      return newCopyCount;
+    });
+  }, [answerSheet, answerSheetId]);
 
   const handleRemoveCopied = async () => {
     try {
       setCopyLoading(true);
       const response = await fetch(Allapi.removeCopied.url(answerSheetId), {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Authorization': localStorage.getItem('token'),
-          'Content-Type': 'application/json',
+          Authorization: localStorage.getItem("token"),
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ passcode }),
       });
-      setCopyLoading(false)
-      if (!response.ok) throw new Error('Invalid passcode');
+      setCopyLoading(false);
+      if (!response.ok) throw new Error("Invalid passcode");
 
+      // Reset local state - detection continues even after reset
       setCopied(false);
       setAnswers({});
       setShowPasscodeModal(false);
-      setPasscode('');
-      toast.success('Copying status removed');
+      setPasscode("");
+      // Note: We don't reset localCopyCount - it continues tracking
+      // The server will handle the actual reset
+      toast.success("Copying status removed");
     } catch (error) {
-      toast.error('Invalid passcode');
+      toast.error("Invalid passcode");
+      // Detection continues even on error - modal stays open
     }
   };
 
@@ -333,18 +290,18 @@ const ExamSession = () => {
     setAiEvaluating(true);
     let finalAiScore = null;
     const statuses = [];
-    
+
     try {
       // Evaluate each answer individually
       for (let i = 0; i < answerSheet.data.length; i++) {
         const question = Object.keys(answerSheet.data[i])[0];
-        const answer = answers[question] || '';
-        
+        const answer = answers[question] || "";
+
         const statusResponse = await fetch(Allapi.aiScore.url, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Authorization': localStorage.getItem('token'),
-            'Content-Type': 'application/json',
+            Authorization: localStorage.getItem("token"),
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             prompt: `Analyze the following code in relation to the question and analyze syntactically "${question}". Return only strictly!! "will execute" or "will not execute". No other text should be included.
@@ -356,55 +313,36 @@ const ExamSession = () => {
 
         if (statusResponse.ok) {
           const statusData = await statusResponse.json();
-          if ( statusData.response.trim().toLowerCase() == ( "will execute" || "will not execute")){
+          if (
+            statusData.response.trim().toLowerCase() ==
+            ("will execute" || "will not execute")
+          ) {
             statuses.push({
               questionNumber: i + 1,
               status: statusData.response.trim().toLowerCase(),
             });
-          }else{
+          } else {
             statuses.push({
               questionNumber: i + 1,
               status: "will not execute",
-            })
+            });
           }
-
         }
       }
 
-      // Get overall remarks
-      const remarksResponse = await fetch(Allapi.aiScore.url, {
-        method: 'POST',
-        headers: {
-          'Authorization': localStorage.getItem('token'),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: `Analyze these JavaScript answers in relation to their respective questions and provide brief, constructive feedback about the overall code quality and potential improvements. Keep it under 100 words. Below are the questions and answers:
-
-          ${answerSheet.data.map((item, index) => {
-            const question = Object.keys(item)[0];
-            const answer = answers[question] || '';
-            return `Question ${index + 1}: ${question}\nAnswer: ${answer}\n`;
-          }).join("\n")}`,
-        }),
-      });
-
-      if (remarksResponse.ok) {
-        const remarksData = await remarksResponse.json();
-        setAiRemarks(remarksData.response);
-      }
-
       // Calculate final score
-      const questions = answerSheet.data.map(item => Object.keys(item)[0]);
+      const questions = answerSheet.data.map((item) => Object.keys(item)[0]);
 
       const scoreResponse = await fetch(Allapi.aiScore.url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': localStorage.getItem('token'),
-          'Content-Type': 'application/json',
+          Authorization: localStorage.getItem("token"),
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          prompt: `Based on these answers for the questions in this data ${questions}, provide a single numerical score out of 100. Only return the number: ${JSON.stringify(answers)}`,
+          prompt: `Based on these answers for the questions in this data ${questions}, provide a single numerical score out of 100. Only return the number: ${JSON.stringify(
+            answers
+          )}`,
         }),
       });
 
@@ -418,7 +356,7 @@ const ExamSession = () => {
       setShowResults(true);
       return finalAiScore;
     } catch (error) {
-      console.error('AI evaluation failed:', error);
+      console.error("AI evaluation failed:", error);
       return null;
     } finally {
       setAiEvaluating(false);
@@ -426,30 +364,39 @@ const ExamSession = () => {
   };
 
   const formatEmail = (email) => {
-    if (!email) return '';
-    const [prefix, domain] = email.split('@');
+    if (!email) return "";
+    const [prefix, domain] = email.split("@");
     return `${prefix.toUpperCase()}@${domain}`;
   };
 
   const handleSubmit = async () => {
+    // Allow submission even if exam status is "stop" - students can submit after teacher stops exam
     try {
       let aiScore = null;
-      
-      if (answerSheet?.exam_type === 'external' || answerSheet?.exam_type === 'viva'|| answerSheet?.exam_type === 'coaviva') {
+
+      if (
+        answerSheet?.exam_type === "external" ||
+        answerSheet?.exam_type === "viva" ||
+        answerSheet?.exam_type === "coaviva"
+      ) {
         aiScore = await evaluateAnswers();
       }
 
-      const formattedAnswers = answerSheet.data.map(questionObj => {
+      const formattedAnswers = answerSheet.data.map((questionObj) => {
         const question = Object.keys(questionObj)[0];
-        return { [question]: answers[question] ? answers[question].replace(/\r\n/g, "\n") : "" };
+        return {
+          [question]: answers[question]
+            ? answers[question].replace(/\r\n/g, "\n")
+            : "",
+        };
       });
 
       setLoading(true);
       const response = await fetch(Allapi.submitAnswerSheet.url, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Authorization': localStorage.getItem('token'),
-          'Content-Type': 'application/json',
+          Authorization: localStorage.getItem("token"),
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           answer_sheet_id: answerSheetId,
@@ -458,23 +405,26 @@ const ExamSession = () => {
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to submit answer sheet');
+      if (!response.ok) throw new Error("Failed to submit answer sheet");
 
-      toast.success('Exam submitted successfully');
+      toast.success("Exam submitted successfully");
       setLoading(false);
-      setAnswerSheet(prevState => ({
+      setAnswerSheet((prevState) => ({
         ...prevState,
         submit_status: true,
       }));
 
-      if (answerSheet?.exam_type === 'viva' || answerSheet?.exam_type === 'external' || answerSheet?.exam_type === 'coaviva') {
+      if (
+        answerSheet?.exam_type === "viva" ||
+        answerSheet?.exam_type === "external" ||
+        answerSheet?.exam_type === "coaviva"
+      ) {
         setShowResults(true);
       } else {
-        navigate('/student');
+        navigate("/student");
       }
-      
     } catch (error) {
-      toast.error(error.message || 'Failed to submit exam');
+      toast.error(error.message || "Failed to submit exam");
       setLoading(false);
     }
   };
@@ -482,7 +432,7 @@ const ExamSession = () => {
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
 
   if (loading) {
@@ -490,7 +440,10 @@ const ExamSession = () => {
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="relative w-16 h-16">
           <div className="absolute w-full h-full border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
-          <div className="absolute border-4 border-blue-300 rounded-full top-1 left-1 w-14 h-14 border-t-transparent animate-spin" style={{ animationDuration: '1.5s' }}></div>
+          <div
+            className="absolute border-4 border-blue-300 rounded-full top-1 left-1 w-14 h-14 border-t-transparent animate-spin"
+            style={{ animationDuration: "1.5s" }}
+          ></div>
         </div>
       </div>
     );
@@ -506,7 +459,9 @@ const ExamSession = () => {
               <Brain className="w-16 h-16 text-blue-500 animate-pulse" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-4">AI is evaluating your answers...</h2>
+          <h2 className="text-2xl font-bold text-white mb-4">
+            AI is evaluating your answers...
+          </h2>
           <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
             <div className="h-full bg-blue-500 animate-loading-bar"></div>
           </div>
@@ -515,23 +470,42 @@ const ExamSession = () => {
     );
   }
 
-  if (showResults && answerSheet?.exam_type !== 'internal') {
+  if (showResults && answerSheet?.exam_type !== "internal") {
     return (
       <div className="min-h-screen bg-gray-900 p-8">
         <div className="max-w-2xl mx-auto bg-gray-800 rounded-xl p-8">
-          <h2 className="text-3xl font-bold text-white mb-8 text-center">Exam Results</h2>
-          
+          <h2 className="text-3xl font-bold text-white mb-8 text-center">
+            Exam Results
+          </h2>
+
           <div className="mb-8">
-            <div className="text-6xl font-bold text-blue-500 text-center mb-4">{aiScore}</div>
-            <p className="text-xl text-gray-400 text-center">Your AI-Generated Score</p>
+            <div className="text-6xl font-bold text-blue-500 text-center mb-4">
+              {aiScore}
+            </div>
+            <p className="text-xl text-gray-400 text-center">
+              Your AI-Generated Score
+            </p>
           </div>
-          {answerSheet?.exam_type === 'external' && ( 
+          {answerSheet?.exam_type === "external" && (
             <div className="space-y-4 mb-8">
-              <h3 className="text-xl font-semibold text-white mb-4">Answer Status:</h3>
+              <h3 className="text-xl font-semibold text-white mb-4">
+                Answer Status:
+              </h3>
               {aiAnswerStatus.map((status, index) => (
-                <div key={index} className="flex items-center justify-between bg-gray-700 p-4 rounded-lg">
-                  <span className="text-white">Question {status.questionNumber}</span>
-                  <span className={status.status === 'will execute' ? 'text-green-400' : 'text-red-400'}>
+                <div
+                  key={index}
+                  className="flex items-center justify-between bg-gray-700 p-4 rounded-lg"
+                >
+                  <span className="text-white">
+                    Question {status.questionNumber}
+                  </span>
+                  <span
+                    className={
+                      status.status === "will execute"
+                        ? "text-green-400"
+                        : "text-red-400"
+                    }
+                  >
                     {status.status}
                   </span>
                 </div>
@@ -539,16 +513,8 @@ const ExamSession = () => {
             </div>
           )}
 
-
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold text-white mb-4">AI Remarks:</h3>
-            <div className="bg-gray-700/50 p-6 rounded-lg border border-gray-600">
-            {formatAiRemarks(aiRemarks)}
-            </div>
-          </div>
-
           <button
-            onClick={() => navigate('/student')}
+            onClick={() => navigate("/student")}
             className="w-full px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-300"
           >
             Back to Home
@@ -563,9 +529,11 @@ const ExamSession = () => {
       <div className="min-h-screen bg-gray-900 p-8 flex items-center justify-center">
         <div className="bg-gray-800 rounded-xl border-2 border-red-500/20 p-8 text-center max-w-lg">
           <h2 className="text-2xl font-bold text-red-400 mb-4">Error</h2>
-          <p className="text-gray-400 mb-6">Failed to load exam data. Please try again.</p>
+          <p className="text-gray-400 mb-6">
+            Failed to load exam data. Please try again.
+          </p>
           <button
-            onClick={() => navigate('/student')}
+            onClick={() => navigate("/student")}
             className="px-6 py-3 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-all duration-300"
           >
             Return to Dashboard
@@ -579,10 +547,14 @@ const ExamSession = () => {
     return (
       <div className="min-h-screen bg-gray-900 p-8 flex items-center justify-center">
         <div className="bg-gray-800 rounded-xl border-2 border-blue-500/20 p-8 text-center max-w-lg">
-          <h2 className="text-2xl font-bold text-white mb-4">Exam Already Submitted</h2>
-          <p className="text-gray-400 mb-6">You have already submitted this exam.</p>
+          <h2 className="text-2xl font-bold text-white mb-4">
+            Exam Already Submitted
+          </h2>
+          <p className="text-gray-400 mb-6">
+            You have already submitted this exam.
+          </p>
           <button
-            onClick={() => navigate('/student')}
+            onClick={() => navigate("/student")}
             className="px-6 py-3 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-all duration-300"
           >
             Return to Dashboard
@@ -593,13 +565,20 @@ const ExamSession = () => {
   }
 
   if (copied) {
-    const remainingChances = 4 - (answerSheet.copy_count || 0);
+    const remainingChances = 4 - localCopyCount;
     return (
       <div className="min-h-screen bg-gray-900 p-8 flex items-center justify-center">
         <div className="bg-gray-800 rounded-xl border-2 border-red-500/20 p-8 text-center max-w-lg">
-          <h2 className="text-2xl font-bold text-red-400 mb-4">Caught Cheating</h2>
-          <p className="text-gray-400 mb-2">You have been marked for copying.</p>
-          <p className="text-yellow-400 mb-6">{remainingChances} {remainingChances === 1 ? 'chance' : 'chances'} remaining before automatic submission</p>
+          <h2 className="text-2xl font-bold text-red-400 mb-4">
+            Caught Cheating
+          </h2>
+          <p className="text-gray-400 mb-2">
+            You have been marked for copying.
+          </p>
+          <p className="text-yellow-400 mb-6">
+            {remainingChances} {remainingChances === 1 ? "chance" : "chances"}{" "}
+            remaining before automatic submission
+          </p>
           <div className="space-y-4">
             <input
               type="password"
@@ -622,12 +601,17 @@ const ExamSession = () => {
   }
 
   // Extract questions from answerSheet.data
-  const questions = answerSheet.data ? answerSheet.data.map(answer => Object.keys(answer)[0]) : [];
+  const questions = answerSheet.data
+    ? answerSheet.data.map((answer) => Object.keys(answer)[0])
+    : [];
   const currentQuestion = questions[activeQuestionIndex];
 
-  if (answerSheet.exam_type === 'external' && !examStarted) {
+  if (answerSheet.exam_type === "external" && !examStarted) {
     return (
-      <div className="min-h-screen bg-gray-900 p-8" style={{scrollbarWidth:'none'}}>
+      <div
+        className="min-h-screen bg-gray-900 p-8"
+        style={{ scrollbarWidth: "none" }}
+      >
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             {/* <button
@@ -646,7 +630,11 @@ const ExamSession = () => {
                 Refresh Questions
               </button>
               {timeLeft !== null && (
-                <div className={`text-lg font-mono ${timeLeft < 300 ? 'text-red-400' : 'text-blue-400'}`}>
+                <div
+                  className={`text-lg font-mono ${
+                    timeLeft < 300 ? "text-red-400" : "text-blue-400"
+                  }`}
+                >
                   Time Left: {formatTime(timeLeft)}
                 </div>
               )}
@@ -656,14 +644,18 @@ const ExamSession = () => {
           <div className="bg-gray-800 rounded-xl border-2 border-blue-500/20 p-8">
             <div className="space-y-8">
               <div className="text-center">
-                <h1 className="text-3xl font-bold text-white mb-2">External Exam</h1>
+                <h1 className="text-3xl font-bold text-white mb-2">
+                  External Exam
+                </h1>
                 <p className="text-gray-400">Set {answerSheet.set_number}</p>
               </div>
 
               <div className="space-y-6">
                 {questions.map((question, index) => (
                   <div key={index} className="bg-gray-700 p-6 rounded-lg">
-                    <h3 className="text-lg text-white mb-4">Question {index + 1}</h3>
+                    <h3 className="text-lg text-white mb-4">
+                      Question {index + 1}
+                    </h3>
                     <p className="text-gray-300">{question}</p>
                   </div>
                 ))}
@@ -679,69 +671,82 @@ const ExamSession = () => {
           </div>
         </div>
         {showRefreshModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full">
-            <h2 className="text-xl font-bold text-white mb-4">Refresh Questions</h2>
-            <p className="text-gray-400 mb-4">Enter the refresh code to continue</p>
-            <input
-              type="password"
-              value={refreshCode}
-              onChange={(e) => setRefreshCode(e.target.value)}
-              placeholder="Enter refresh code"
-              autocomplete="new-password"
-              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 mb-4"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setShowRefreshModal(false);
-                  setRefreshCode('');
-                }}
-                className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleRefreshQuestions}
-                disabled={refreshLoading}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center"
-              >
-                {refreshLoading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Refreshing...
-                  </>
-                ) : (
-                  'Refresh'
-                )}
-              </button>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full">
+              <h2 className="text-xl font-bold text-white mb-4">
+                Refresh Questions
+              </h2>
+              <p className="text-gray-400 mb-4">
+                Enter the refresh code to continue
+              </p>
+              <input
+                type="password"
+                value={refreshCode}
+                onChange={(e) => setRefreshCode(e.target.value)}
+                placeholder="Enter refresh code"
+                autocomplete="new-password"
+                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 mb-4"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setShowRefreshModal(false);
+                    setRefreshCode("");
+                  }}
+                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRefreshQuestions}
+                  disabled={refreshLoading}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center"
+                >
+                  {refreshLoading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Refreshing...
+                    </>
+                  ) : (
+                    "Refresh"
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 p-8" style={{scrollbarWidth:"none"}} >
+    <div
+      className="min-h-screen bg-gray-900 p-8"
+      style={{ scrollbarWidth: "none" }}
+    >
       <div className="max-w-4xl mx-auto space-y-8">
-      <div className="bg-gray-800 rounded-xl border-2 border-blue-500/20 p-6 mb-8">
+        <div className="bg-gray-800 rounded-xl border-2 border-blue-500/20 p-6 mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-blue-500/40">
                 <img
-                  src={`https://intranet.rguktn.ac.in/SMS/usrphotos/user/${capitalize(user?.email?.split('@')[0])}.jpg`}
+                  src={`https://intranet.rguktn.ac.in/SMS/usrphotos/user/${capitalize(
+                    user?.email?.split("@")[0]
+                  )}.jpg`}
                   alt="Profile"
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXVzZXIiPjxwYXRoIGQ9Ik0xOSAyMXYtMmE0IDQgMCAwIDAtNC00SDlhNCA0IDAgMCAwLTQgNHYyIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSI3IiByPSI0Ii8+PC9zdmc+';
-                    e.target.className = 'w-full h-full object-contain p-2 text-gray-400';
+                    e.target.src =
+                      "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXVzZXIiPjxwYXRoIGQ9Ik0xOSAyMXYtMmE0IDQgMCAwIDAtNC00SDlhNCA0IDAgMCAwLTQgNHYyIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSI3IiByPSI0Ii8+PC9zdmc+";
+                    e.target.className =
+                      "w-full h-full object-contain p-2 text-gray-400";
                   }}
                 />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-white">{formatEmail(user?.email)}</h2>
+                <h2 className="text-xl font-semibold text-white">
+                  {formatEmail(user?.email)}
+                </h2>
                 <p className="text-gray-400">Student</p>
               </div>
             </div>
@@ -763,13 +768,17 @@ const ExamSession = () => {
               </button>
             </div>
             {timeLeft !== null && (
-              <div className={`text-lg font-mono ${timeLeft < 300 ? 'text-red-400' : 'text-blue-400'}`}>
+              <div
+                className={`text-lg font-mono ${
+                  timeLeft < 300 ? "text-red-400" : "text-blue-400"
+                }`}
+              >
                 Time Left: {formatTime(timeLeft)}
               </div>
             )}
           </div>
 
-          {answerSheet.exam_type === 'external' ? (
+          {answerSheet.exam_type === "external" ? (
             <div className="space-y-6">
               <div className="flex flex-wrap gap-2">
                 {questions.map((q, index) => (
@@ -778,10 +787,10 @@ const ExamSession = () => {
                     onClick={() => setActiveQuestionIndex(index)}
                     className={`w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-300 ${
                       activeQuestionIndex === index
-                        ? 'bg-blue-500 text-white'
+                        ? "bg-blue-500 text-white"
                         : answers[q]
-                        ? 'bg-blue-500/20 text-blue-400'
-                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        ? "bg-blue-500/20 text-blue-400"
+                        : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                     }`}
                   >
                     {index + 1}
@@ -790,7 +799,9 @@ const ExamSession = () => {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-lg text-white">Question {activeQuestionIndex + 1}</h3>
+                <h3 className="text-lg text-white">
+                  Question {activeQuestionIndex + 1}
+                </h3>
                 <p className="text-white">{currentQuestion}</p>
                 {/* <textarea
                    value={answers[currentQuestion] || ''}
@@ -798,17 +809,23 @@ const ExamSession = () => {
                    className="w-full h-64 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
                   placeholder="Enter your answer..."
                  />  */}
-                <div className="w-full h-64 border border-gray-600 rounded-lg overflow-hidden hide-scrollbar" style={{scrollbarWidth:'none'}}>
+                <div
+                  className="w-full h-64 border border-gray-600 rounded-lg overflow-hidden hide-scrollbar"
+                  style={{ scrollbarWidth: "none" }}
+                >
                   <CodeMirror
                     value={answers[currentQuestion] || ""}
                     height="100%"
                     theme={dracula}
                     extensions={[javascript()]}
                     onChange={(value) => {
-                      setAnswers((prev) => ({ ...prev, [currentQuestion]: value }));
+                      setAnswers((prev) => ({
+                        ...prev,
+                        [currentQuestion]: value,
+                      }));
                     }}
-                    style={{ height: '100%', scrollbarWidth:'none' }}
-                    className='hide-scrollbar'
+                    style={{ height: "100%", scrollbarWidth: "none" }}
+                    className="hide-scrollbar"
                     basicSetup={{
                       lineNumbers: true,
                       highlightActiveLineGutter: true,
@@ -821,7 +838,7 @@ const ExamSession = () => {
                       syntaxHighlighting: true,
                       bracketMatching: true,
                       closeBrackets: true,
-                      autocompletion: true,
+                      autocompletion: false,
                       rectangularSelection: true,
                       crosshairCursor: true,
                       highlightActiveLine: true,
@@ -838,24 +855,25 @@ const ExamSession = () => {
                     indentWithTab={true}
                   />
                 </div>
-                
               </div>
 
               <div className="flex justify-between">
                 <button
-                  onClick={() => setActiveQuestionIndex(prev => Math.max(0, prev - 1))}
+                  onClick={() =>
+                    setActiveQuestionIndex((prev) => Math.max(0, prev - 1))
+                  }
                   disabled={activeQuestionIndex === 0}
                   className={`px-4 py-2 rounded-lg transition-all duration-300 ${
                     activeQuestionIndex === 0
-                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                      : 'bg-gray-700 text-white hover:bg-gray-600'
+                      ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+                      : "bg-gray-700 text-white hover:bg-gray-600"
                   }`}
                 >
                   Previous
                 </button>
                 {activeQuestionIndex < questions.length - 1 ? (
                   <button
-                    onClick={() => setActiveQuestionIndex(prev => prev + 1)}
+                    onClick={() => setActiveQuestionIndex((prev) => prev + 1)}
                     className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-300"
                   >
                     Next
@@ -874,16 +892,25 @@ const ExamSession = () => {
             <div className="space-y-6">
               {questions.map((question, index) => (
                 <div key={index} className="space-y-2">
-                  <h3 className="text-lg text-white">Question {index + 1}: {question}</h3>
-                  {answerSheet.exam_type === 'internal' ? (
-                    <p className="text-gray-400 italic">This is an internal exam. No answers required.</p>
+                  <h3 className="text-lg text-white">
+                    Question {index + 1}: {question}
+                  </h3>
+                  {answerSheet.exam_type === "internal" ? (
+                    <p className="text-gray-400 italic">
+                      This is an internal exam. No answers required.
+                    </p>
                   ) : (
                     <textarea
-                      value={answers[question] || ''}
-                      onChange={(e) => setAnswers(prev => ({ ...prev, [question]: e.target.value }))}
+                      value={answers[question] || ""}
+                      onChange={(e) =>
+                        setAnswers((prev) => ({
+                          ...prev,
+                          [question]: e.target.value,
+                        }))
+                      }
                       className="w-full h-32 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
                       placeholder="Enter your answer..."
-                      style={{scrollbarWidth:'none'}}
+                      style={{ scrollbarWidth: "none" }}
                     />
                   )}
                 </div>
@@ -894,7 +921,7 @@ const ExamSession = () => {
                   disabled={loading}
                   className="px-6 py-3 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Submitting...' : 'Submit Exam'}
+                  {loading ? "Submitting..." : "Submit Exam"}
                 </button>
               </div>
             </div>
@@ -906,8 +933,12 @@ const ExamSession = () => {
       {showRefreshModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full">
-            <h2 className="text-xl font-bold text-white mb-4">Refresh Questions</h2>
-            <p className="text-gray-400 mb-4">Enter the refresh code to continue</p>
+            <h2 className="text-xl font-bold text-white mb-4">
+              Refresh Questions
+            </h2>
+            <p className="text-gray-400 mb-4">
+              Enter the refresh code to continue
+            </p>
             <input
               type="password"
               value={refreshCode}
@@ -920,7 +951,7 @@ const ExamSession = () => {
               <button
                 onClick={() => {
                   setShowRefreshModal(false);
-                  setRefreshCode('');
+                  setRefreshCode("");
                 }}
                 className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
               >
@@ -937,7 +968,7 @@ const ExamSession = () => {
                     Refreshing...
                   </>
                 ) : (
-                  'Refresh'
+                  "Refresh"
                 )}
               </button>
             </div>
