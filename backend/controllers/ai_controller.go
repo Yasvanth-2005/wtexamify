@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -62,24 +62,46 @@ func RunChat(prompt string, chatHistory []string) (string, error) {
 	defer resp.Body.Close()
 
 	// Read response
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	// Log the full API response for debugging
-	// fmt.Println("API Response:", string(body))
+	fmt.Println("API Response Status:", resp.StatusCode)
+	fmt.Println("API Response Body:", string(body))
+
+	// Check if request was successful
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("API returned status code: %d, body: %s", resp.StatusCode, string(body))
+	}
 
 	// Correct the response parsing
 	var responseMap map[string]interface{}
 	err = json.Unmarshal(body, &responseMap)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse response: %w", err)
+		return "", fmt.Errorf("failed to parse response: %w, body: %s", err, string(body))
+	}
+
+	// Check for errors in response
+	if errorData, ok := responseMap["error"].(map[string]interface{}); ok {
+		errorMessage := "Unknown error"
+		if msg, ok := errorData["message"].(string); ok {
+			errorMessage = msg
+		}
+		return "", fmt.Errorf("API error: %s", errorMessage)
 	}
 
 	// Check if 'candidates' exist in the response
 	if candidates, ok := responseMap["candidates"].([]interface{}); ok && len(candidates) > 0 {
 		if candidate, ok := candidates[0].(map[string]interface{}); ok {
+			// Check for finishReason (might indicate blocked content)
+			if finishReason, ok := candidate["finishReason"].(string); ok {
+				if finishReason != "STOP" {
+					return "", fmt.Errorf("AI response blocked or incomplete, finishReason: %s", finishReason)
+				}
+			}
+			
 			if content, ok := candidate["content"].(map[string]interface{}); ok {
 				if parts, ok := content["parts"].([]interface{}); ok && len(parts) > 0 {
 					if text, ok := parts[0].(map[string]interface{})["text"].(string); ok {
@@ -90,7 +112,9 @@ func RunChat(prompt string, chatHistory []string) (string, error) {
 		}
 	}
 
-	return "No valid response from AI", nil
+	// Log the response structure for debugging
+	fmt.Printf("Unexpected response structure: %+v\n", responseMap)
+	return "", fmt.Errorf("no valid response from AI - unexpected response structure")
 }
 
 func GetChatResponse(c *gin.Context) {
