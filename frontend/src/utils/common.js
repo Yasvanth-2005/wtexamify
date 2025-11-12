@@ -1,9 +1,9 @@
-// const backends = [
-//   "https://wtexamifybackend1.onrender.com",
-//   "https://wtexamifybackend2.onrender.com",
-// ];
+const backends = [
+  "https://wtexamifybackend1.onrender.com",
+  "https://wtexamifybackend2.onrender.com",
+];
 
-const backends = ["http://localhost:8080", "http://localhost:8080"];
+// const backends = ["http://localhost:8080", "http://localhost:8080"];
 
 const getRandomBackend = () =>
   backends[Math.floor(Math.random() * backends.length)];
