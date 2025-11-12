@@ -22,6 +22,27 @@ var userCollection *mongo.Collection = config.GetCollection(config.Client, "user
 var studentContainerCollection *mongo.Collection = config.GetCollection(config.Client, "student_containers")
 var teacherContainerCollection *mongo.Collection = config.GetCollection(config.Client, "teacher_containers")
 
+// Allowed teacher/admin emails whitelist
+var allowedTeacherEmails = []string{
+	"maheshkarri2109@gmail.com",
+	"maheshkarri2222@gmail.com",
+	// "vasuch9959@rguktn.ac.in",
+	"vasu.challapalli9@gmail.com",
+	"yasvanthhanumantu1@gmail.com",
+	"vasuch9491@gmail.com",
+	// Add more teacher/admin emails here
+}
+
+func isEmailAllowed(email string) bool {
+	for _, allowedEmail := range allowedTeacherEmails {
+		if email == allowedEmail {
+			return true
+		}
+	}
+
+	return strings.HasSuffix(email, "@rguktn.ac.in")
+}
+
 var googleOauthConfig = &oauth2.Config{
 	ClientID:     "117664400321-kchnk20sjd2m9h46u0e1go3194d19uut.apps.googleusercontent.com",
 	ClientSecret: "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",
@@ -80,8 +101,27 @@ func GoogleCallback(c *gin.Context) {
 	googleID, _ := userInfo["id"].(string)
 	image, _ := userInfo["picture"].(string)
 
-	role := "teacher"
-	if strings.HasSuffix(email, "@rguktn.ac.in") {
+	// Check if email is allowed (either in teacher/admin whitelist or legitimate RGUKT student)
+	if !isEmailAllowed(email) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied. Your email is not authorized to use this system."})
+		return
+	}
+
+	// Determine role: First check if in teacher/admin whitelist, then check if RGUKT student
+	role := "student" // Default to student for RGUKT emails
+	isTeacher := false
+	
+	// Check if email is in the teacher/admin whitelist first
+	for _, allowedEmail := range allowedTeacherEmails {
+		if email == allowedEmail {
+			isTeacher = true
+			break
+		}
+	}
+	
+	if isTeacher {
+		role = "teacher"
+	} else if strings.HasSuffix(email, "@rguktn.ac.in") {
 		role = "student"
 	}
 

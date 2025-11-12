@@ -206,6 +206,13 @@ func SubmitAnswerSheet(c *gin.Context) {
 		return
 	}
 
+	// Allow submission even if exam status is "stop" - students can submit after teacher stops exam
+	// Only check if answer sheet already submitted
+	if answerSheet.SubmitStatus {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Answer sheet already submitted"})
+		return
+	}
+
 	// Update answer sheet with submitted answers
 	update := bson.M{
 		"$set": bson.M{
