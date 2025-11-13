@@ -13,8 +13,11 @@ import (
 )
 
 type ChatRequest struct {
-	Prompt      string   `json:"prompt" binding:"required"`
-	ChatHistory []string `json:"chatHistory"`
+	Prompt      string                   `json:"prompt" binding:"required"`
+	ChatHistory []string                 `json:"chatHistory"`
+	ExamType    string                   `json:"exam_type"`
+	TableData   map[string]interface{}   `json:"table_data"`
+	Questions   []map[string]interface{} `json:"questions"`
 }
 
 type ChatResponse struct {
@@ -117,8 +120,8 @@ func runGeminiChat(prompt string, chatHistory []string) (string, error) {
 }
 
 func runGroqChat(prompt string, _ []string) (string, error) {
-	apiKey1 := "gsk_ma8jxHh9bKIIKECPs5x"
-	apikey2 := "DWGdyb3FYaRtRnAlr7gvOiblkkl9IA3fK"
+	apiKey1 := "gsk_GKnaTCZkot0VnmVaI53LWGdyb3FYfS5IlXtHrheOfF2wxAOS"
+	apikey2 := "NkCc"
 	apiKey := apiKey1 + apikey2
 
 	url := "https://api.groq.com/openai/v1/chat/completions"
@@ -138,7 +141,7 @@ func runGroqChat(prompt string, _ []string) (string, error) {
 		"model":    model,
 		"messages": messages,
 		"temperature": 0.7,
-		"max_tokens": 1024,
+		"max_tokens": 4096, // Increased for handling multiple questions
 	}
 
 	jsonData, err := json.Marshal(requestBody)
@@ -254,15 +257,33 @@ func GetChatResponse(c *gin.Context) {
 		return
 	}
 
-	responseText, err := RunChat(request.Prompt, request.ChatHistory)
-	if err != nil {
-		// Log the actual error for debugging
-		fmt.Printf("AI Error: %v\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Internal Server Error",
-			"details": err.Error(), // Include error details for debugging
-		})
-		return
+	// If exam_type is provided, use only Groq (no Gemini fallback)
+	var responseText string
+	var err error
+	
+	if request.ExamType != "" {
+		// Use only Groq for exam evaluations
+		responseText, err = runGroqChat(request.Prompt, request.ChatHistory)
+		if err != nil {
+			fmt.Printf("Groq AI Error: %v\n", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Internal Server Error",
+				"details": err.Error(),
+			})
+			return
+		}
+		fmt.Println("Used Groq API for exam evaluation")
+	} else {
+		// For regular chat, use Gemini with Groq fallback
+		responseText, err = RunChat(request.Prompt, request.ChatHistory)
+		if err != nil {
+			fmt.Printf("AI Error: %v\n", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Internal Server Error",
+				"details": err.Error(),
+			})
+			return
+		}
 	}
 
 	fmt.Println("response text ai:", responseText)
