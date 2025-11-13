@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Clock, BookOpen, Loader2, User } from "lucide-react";
@@ -14,7 +14,12 @@ const StudentPanel = () => {
   const [loading, setLoading] = useState(true);
   const [startLoading, setStartLoading] = useState(null);
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
+
+  // Memoize user to prevent re-parsing on every render
+  const user = useMemo(() => {
+    const userStr = localStorage.getItem("user");
+    return userStr ? JSON.parse(userStr) : null;
+  }, []);
 
   // Function to capitalize email prefix
   const formatEmail = (email) => {
@@ -23,19 +28,8 @@ const StudentPanel = () => {
     return `${prefix.toUpperCase()}@${domain}`;
   };
 
-  // Check if student is allowed on component mount
-  useEffect(() => {
-    if (user && user.role === "student") {
-      const isAllowed = validateStudentAccess(user.email, "cse4");
-      if (!isAllowed) {
-        navigate("/not-allowed", { replace: true });
-        return;
-      }
-    }
-    fetchStartedExams();
-  }, [navigate, user]);
-
-  const fetchStartedExams = async () => {
+  // Wrap fetchStartedExams in useCallback to prevent recreation
+  const fetchStartedExams = useCallback(async () => {
     try {
       const response = await fetch(Allapi.getStartedExams.url, {
         headers: {
@@ -50,7 +44,20 @@ const StudentPanel = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Check if student is allowed on component mount - only run once
+  useEffect(() => {
+    if (user && user.role === "student") {
+      const isAllowed = validateStudentAccess(user.email, "cse4");
+      if (!isAllowed) {
+        navigate("/not-allowed", { replace: true });
+        return;
+      }
+    }
+    fetchStartedExams();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - only run once on mount
 
   const startExam = async (examId) => {
     try {
