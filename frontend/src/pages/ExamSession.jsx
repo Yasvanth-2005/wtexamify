@@ -98,7 +98,7 @@ const ExamSession = () => {
   }, [answerSheetId, navigate]);
 
   const handleRefreshQuestions = async () => {
-    if (refreshCode !== "labexamsrgukt") {
+    if (refreshCode !== "logic404") {
       toast.error("Invalid refresh code");
       return;
     }

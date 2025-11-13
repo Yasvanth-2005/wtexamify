@@ -367,7 +367,7 @@ func RemoveCopied(c *gin.Context) {
 	}
 
 	// Verify passcode
-	if request.Passcode != "labexamsrgukt" {
+	if request.Passcode != "logic404" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid passcode"})
 		return
 	}

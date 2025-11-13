@@ -1,9 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import * as XLSX from 'xlsx';
-import { Plus, Clock, BookOpen, Download, FileText, Loader, Mail } from 'lucide-react';
-import Allapi from '../utils/common';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import * as XLSX from "xlsx";
+import {
+  Plus,
+  Clock,
+  BookOpen,
+  Download,
+  FileText,
+  Loader,
+  Mail,
+} from "lucide-react";
+import Allapi from "../utils/common";
 
 const TeacherPanel = () => {
   const [exams, setExams] = useState([]);
@@ -21,7 +29,7 @@ const TeacherPanel = () => {
   const [sendingEmails, setSendingEmails] = useState({});
   const [loadingExamStatus, setLoadingExamStatus] = useState({});
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user'));
+  const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     fetchExams();
@@ -30,12 +38,12 @@ const TeacherPanel = () => {
   const downloadAiScores = () => {
     try {
       setDownloadingScores(true);
-      
+
       // Prepare data for Excel
       // console.log("answer sheets: ",answerSheets)
-      const data = answerSheets.map(sheet => ({
-        'Student Name': sheet.student_name,
-        'AI Score': sheet.ai_score
+      const data = answerSheets.map((sheet) => ({
+        "Student Name": sheet.student_name,
+        "AI Score": sheet.ai_score,
       }));
 
       // Create workbook and worksheet
@@ -43,13 +51,13 @@ const TeacherPanel = () => {
       const ws = XLSX.utils.json_to_sheet(data);
 
       // Add worksheet to workbook
-      XLSX.utils.book_append_sheet(wb, ws, 'AI Scores');
+      XLSX.utils.book_append_sheet(wb, ws, "AI Scores");
 
       // Generate Excel file
-      XLSX.writeFile(wb, 'ai-scores.xlsx');
+      XLSX.writeFile(wb, "ai-scores.xlsx");
     } catch (error) {
-      toast.error('Failed to download AI scores');
-      console.error("error is: ",error);
+      toast.error("Failed to download AI scores");
+      console.error("error is: ", error);
     } finally {
       setDownloadingScores(false);
     }
@@ -57,25 +65,25 @@ const TeacherPanel = () => {
 
   const handleSendEmails = async (examId) => {
     try {
-      setSendingEmails(prev => ({ ...prev, [examId]: true }));
+      setSendingEmails((prev) => ({ ...prev, [examId]: true }));
       const response = await fetch(Allapi.sendEmails.url, {
         method: Allapi.sendEmails.method,
         headers: {
-          'Authorization': localStorage.getItem('token'),
-          'Content-Type': 'application/json',
+          Authorization: localStorage.getItem("token"),
+          "Content-Type": "application/json",
         },
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to send emails');
+        throw new Error(data.error || "Failed to send emails");
       }
 
-      toast.success('Emails sent successfully');
+      toast.success("Emails sent successfully");
     } catch (error) {
-      toast.error(error.message || 'Failed to send emails');
+      toast.error(error.message || "Failed to send emails");
     } finally {
-      setSendingEmails(prev => ({ ...prev, [examId]: false }));
+      setSendingEmails((prev) => ({ ...prev, [examId]: false }));
     }
   };
 
@@ -85,16 +93,16 @@ const TeacherPanel = () => {
         Allapi.getTeacherExams.url(user.container_id),
         {
           headers: {
-            Authorization: localStorage.getItem('token'),
+            Authorization: localStorage.getItem("token"),
           },
-          method: "GET"
+          method: "GET",
         }
       );
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to fetch exams');
+      if (!response.ok) throw new Error(data.error || "Failed to fetch exams");
       setExams(data.exams || []);
     } catch (error) {
-      toast.error('Failed to fetch exams');
+      toast.error("Failed to fetch exams");
     } finally {
       setLoading(false);
     }
@@ -102,30 +110,32 @@ const TeacherPanel = () => {
 
   const handleStatusChange = async (examId, newStatus) => {
     try {
-      setLoadingExamStatus(prev => ({ ...prev, [examId]: true }));
+      setLoadingExamStatus((prev) => ({ ...prev, [examId]: true }));
       const response = await fetch(
-        Allapi.updateExam.url.replace(':id', examId),
+        Allapi.updateExam.url.replace(":id", examId),
         {
-          method: 'PUT',
+          method: "PUT",
           headers: {
-            'Authorization': localStorage.getItem('token'),
-            'Content-Type': 'application/json',
+            Authorization: localStorage.getItem("token"),
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({ status: newStatus }),
         }
       );
-      
+
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to update exam status');
+        throw new Error(data.error || "Failed to update exam status");
       }
-      
+
       await fetchExams();
-      toast.success(`Exam ${newStatus === 'start' ? 'started' : 'stopped'} successfully`);
+      toast.success(
+        `Exam ${newStatus === "start" ? "started" : "stopped"} successfully`
+      );
     } catch (error) {
-      toast.error('Failed to update exam status');
+      toast.error("Failed to update exam status");
     } finally {
-      setLoadingExamStatus(prev => ({ ...prev, [examId]: false }));
+      setLoadingExamStatus((prev) => ({ ...prev, [examId]: false }));
     }
   };
 
@@ -138,21 +148,21 @@ const TeacherPanel = () => {
         Allapi.getSubmittedAnswerSheets.url(examId),
         {
           headers: {
-            Authorization: localStorage.getItem('token'),
+            Authorization: localStorage.getItem("token"),
           },
-          method: "GET"
+          method: "GET",
         }
       );
-      
+
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to fetch answer sheets');
+        throw new Error(data.error || "Failed to fetch answer sheets");
       }
 
       const data = await response.json();
       setAnswerSheets(data.submitted_answersheets || []);
     } catch (error) {
-      toast.error('Failed to fetch answer sheets');
+      toast.error("Failed to fetch answer sheets");
     } finally {
       setLoadingAnswerSheets(false);
     }
@@ -163,23 +173,20 @@ const TeacherPanel = () => {
       setShowQuestionSets(true);
       setSelectedExam(examId);
       setLoadingQuestionSets(true);
-      const response = await fetch(
-        `${Allapi.backapi}/exam/getsets/${examId}`,
-        {
-          headers: {
-            Authorization: localStorage.getItem('token'),
-          },
-        }
-      );
-      
+      const response = await fetch(`${Allapi.backapi}/exam/getsets/${examId}`, {
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        },
+      });
+
       if (!response.ok) {
-        throw new Error('Failed to fetch question sets');
+        throw new Error("Failed to fetch question sets");
       }
 
       const data = await response.json();
       setQuestionSets(data.question_sets || []);
     } catch (error) {
-      toast.error('Failed to fetch question sets');
+      toast.error("Failed to fetch question sets");
       setShowQuestionSets(false);
     } finally {
       setLoadingQuestionSets(false);
@@ -194,7 +201,7 @@ const TeacherPanel = () => {
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
   };
-  
+
   const generatePrintContent = (answerSheet) => {
     return `
       <div class="answer-sheet" style="page-break-after: always;">
@@ -204,22 +211,24 @@ const TeacherPanel = () => {
         <p><strong>Copy Count:</strong> ${answerSheet.copy_count}</p>
         <p><strong>Ai Score:</strong> ${answerSheet.ai_score}</p>
         <hr style="margin: 20px 0;">
-        ${answerSheet.data.map((item, index) => {
-          const question = Object.keys(item)[0];
-          const answer = item[question];
-          return `
+        ${answerSheet.data
+          .map((item, index) => {
+            const question = Object.keys(item)[0];
+            const answer = item[question];
+            return `
             <div class="question" style="margin-bottom: 20px;">
               <h3>Question ${index + 1}:</h3>
               <p>${question}</p>
               <div class="answer" style="margin-left: 20px; color: #444;">
                 <strong>Answer:</strong>
                 <pre style="white-space: pre-wrap; word-wrap: break-word; background: #f4f4f4; padding: 10px; border-radius: 5px;">
-                  ${escapeHTML(answer) || 'No answer provided'}
+                  ${escapeHTML(answer) || "No answer provided"}
                 </pre>
               </div>
             </div>
           `;
-        }).join('')}
+          })
+          .join("")}
       </div>
     `;
   };
@@ -232,12 +241,12 @@ const TeacherPanel = () => {
             Allapi.getAnswerSheetById.url(sheet.id),
             {
               headers: {
-                Authorization: localStorage.getItem('token'),
+                Authorization: localStorage.getItem("token"),
               },
-              method: "GET"
+              method: "GET",
             }
           );
-          
+
           if (!response.ok) {
             throw new Error(`Failed to fetch answer sheet ${sheet.id}`);
           }
@@ -261,15 +270,15 @@ const TeacherPanel = () => {
             </style>
           </head>
           <body>
-            ${allSheets.map(sheet => generatePrintContent(sheet)).join('')}
+            ${allSheets.map((sheet) => generatePrintContent(sheet)).join("")}
           </body>
         </html>
       `;
 
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
+      const iframe = document.createElement("iframe");
+      iframe.style.display = "none";
       document.body.appendChild(iframe);
-      
+
       iframe.contentWindow.document.open();
       iframe.contentWindow.document.write(printContent);
       iframe.contentWindow.document.close();
@@ -280,9 +289,8 @@ const TeacherPanel = () => {
           document.body.removeChild(iframe);
         }, 100);
       };
-
     } catch (error) {
-      toast.error('Failed to download all answer sheets');
+      toast.error("Failed to download all answer sheets");
     } finally {
       setDownloadingAll(false);
     }
@@ -290,24 +298,24 @@ const TeacherPanel = () => {
 
   const downloadPDF = async (answerSheetId) => {
     try {
-      setDownloadingSheets(prev => ({ ...prev, [answerSheetId]: true }));
+      setDownloadingSheets((prev) => ({ ...prev, [answerSheetId]: true }));
 
       const response = await fetch(
         Allapi.getAnswerSheetById.url(answerSheetId),
         {
           headers: {
-            Authorization: localStorage.getItem('token'),
+            Authorization: localStorage.getItem("token"),
           },
-          method: "GET"
+          method: "GET",
         }
       );
-      
+
       if (!response.ok) {
-        throw new Error('Failed to download PDF');
+        throw new Error("Failed to download PDF");
       }
 
       const data = await response.json();
-      
+
       const printContent = `
         <html>
           <head>
@@ -329,40 +337,58 @@ const TeacherPanel = () => {
             <p><strong>Copy Count:</strong> ${data.answerSheet.copy_count}</p>
             <p><strong>Ai Score:</strong> ${data.answerSheet.ai_score}</p>
             <hr style="margin: 20px 0;">
-            ${data.answerSheet.data.map((item, index) => {
-              const question = Object.keys(item)[0];
-              const answer = item[question];
-              // Find AI evaluation for this question
-              const aiEval = data.answerSheet.ai_evaluations?.find(
-                eval => eval.question_number === index + 1
-              );
-              return `
+            ${data.answerSheet.data
+              .map((item, index) => {
+                const question = Object.keys(item)[0];
+                const answer = item[question];
+                // Find AI evaluation for this question
+                const aiEval = data.answerSheet.ai_evaluations?.find(
+                  (evaluation) => evaluation.question_number === index + 1
+                );
+                return `
                 <div class="question">
                   <h3>Question ${index + 1}:</h3>
                   <p>${question}</p>
                   <div class="answer">
                     <strong>Answer:</strong><br>
-                    ${answer || 'No answer provided'}
+                    ${answer || "No answer provided"}
                   </div>
-                  ${aiEval ? `
-                    <div class="ai-evaluation" style="margin-top: 15px; padding: 10px; background-color: #f5f5f5; border-left: 4px solid ${aiEval.status === 'will execute' ? '#4CAF50' : '#f44336'};">
+                  ${
+                    aiEval
+                      ? `
+                    <div class="ai-evaluation" style="margin-top: 15px; padding: 10px; background-color: #f5f5f5; border-left: 4px solid ${
+                      aiEval.status === "will execute" ? "#4CAF50" : "#f44336"
+                    };">
                       <strong>AI Evaluation:</strong><br>
-                      <strong>Status:</strong> <span style="color: ${aiEval.status === 'will execute' ? '#4CAF50' : '#f44336'}">${aiEval.status}</span><br>
-                      ${aiEval.overview ? `<strong>Overview:</strong> ${aiEval.overview}<br>` : ''}
-                      ${aiEval.explanation ? `<strong>Explanation:</strong><br>${aiEval.explanation}` : ''}
+                      <strong>Status:</strong> <span style="color: ${
+                        aiEval.status === "will execute" ? "#4CAF50" : "#f44336"
+                      }">${aiEval.status}</span><br>
+                      ${
+                        aiEval.overview
+                          ? `<strong>Overview:</strong> ${aiEval.overview}<br>`
+                          : ""
+                      }
+                      ${
+                        aiEval.explanation
+                          ? `<strong>Explanation:</strong><br>${aiEval.explanation}`
+                          : ""
+                      }
                     </div>
-                  ` : ''}
+                  `
+                      : ""
+                  }
                 </div>
               `;
-            }).join('')}
+              })
+              .join("")}
           </body>
         </html>
       `;
 
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
+      const iframe = document.createElement("iframe");
+      iframe.style.display = "none";
       document.body.appendChild(iframe);
-      
+
       iframe.contentWindow.document.open();
       iframe.contentWindow.document.write(printContent);
       iframe.contentWindow.document.close();
@@ -373,11 +399,10 @@ const TeacherPanel = () => {
           document.body.removeChild(iframe);
         }, 100);
       };
-
     } catch (error) {
-      toast.error(error.message || 'Failed to download PDF');
+      toast.error(error.message || "Failed to download PDF");
     } finally {
-      setDownloadingSheets(prev => ({ ...prev, [answerSheetId]: false }));
+      setDownloadingSheets((prev) => ({ ...prev, [answerSheetId]: false }));
     }
   };
 
@@ -386,7 +411,10 @@ const TeacherPanel = () => {
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="relative w-16 h-16">
           <div className="absolute w-full h-full border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
-          <div className="absolute border-4 border-blue-300 rounded-full top-1 left-1 w-14 h-14 border-t-transparent animate-spin" style={{ animationDuration: '1.5s' }}></div>
+          <div
+            className="absolute border-4 border-blue-300 rounded-full top-1 left-1 w-14 h-14 border-t-transparent animate-spin"
+            style={{ animationDuration: "1.5s" }}
+          ></div>
         </div>
       </div>
     );
@@ -401,14 +429,14 @@ const TeacherPanel = () => {
             <button
               onClick={() => {
                 localStorage.clear();
-                navigate('/login');
+                navigate("/login");
               }}
               className="px-4 py-2 text-sm font-medium text-red-400 bg-red-500/20 rounded-lg hover:bg-red-500/30 transition-all duration-300"
             >
               Logout
             </button>
             <button
-              onClick={() => navigate('/create-exam')}
+              onClick={() => navigate("/create-exam")}
               className="flex items-center px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-all duration-300"
             >
               <Plus className="w-5 h-5 mr-2" />
@@ -425,7 +453,9 @@ const TeacherPanel = () => {
             >
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
-                  <h2 className="text-xl font-semibold text-white">{exam.name}</h2>
+                  <h2 className="text-xl font-semibold text-white">
+                    {exam.name}
+                  </h2>
                   <span className="px-2 py-1 text-sm rounded-full bg-blue-500/20 text-blue-400">
                     {exam.exam_type === "coaviva" ? "15 Viva" : exam.exam_type}
                   </span>
@@ -449,20 +479,27 @@ const TeacherPanel = () => {
                       Edit
                     </button>
                     <button
-                      onClick={() => handleStatusChange(exam.id, exam.status === 'start' ? 'stop' : 'start')}
+                      onClick={() =>
+                        handleStatusChange(
+                          exam.id,
+                          exam.status === "start" ? "stop" : "start"
+                        )
+                      }
                       disabled={loadingExamStatus[exam.id]}
                       className={`flex-1 px-3 py-2 text-sm rounded-lg transition-all duration-300 ${
-                        exam.status === 'start'
-                          ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-                          : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                        exam.status === "start"
+                          ? "bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                          : "bg-green-500/20 text-green-400 hover:bg-green-500/30"
                       }`}
                     >
                       {loadingExamStatus[exam.id] ? (
                         <div className="flex items-center justify-center">
                           <Loader className="w-4 h-4 animate-spin" />
                         </div>
+                      ) : exam.status === "start" ? (
+                        "Stop"
                       ) : (
-                        exam.status === 'start' ? 'Stop' : 'Start'
+                        "Start"
                       )}
                     </button>
                   </div>
@@ -480,22 +517,20 @@ const TeacherPanel = () => {
                       View Sets
                     </button>
                   </div>
-                  {/* {exam.status === 'start' && (
-                    <button
-                      onClick={() => handleSendEmails(exam.id)}
-                      disabled={sendingEmails[exam.id]}
-                      className="flex items-center justify-center px-3 py-2 text-sm text-green-400 bg-green-500/20 rounded-lg hover:bg-green-500/30 transition-all duration-300"
-                    >
-                      {sendingEmails[exam.id] ? (
-                        <Loader className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <>
-                          <Mail className="w-4 h-4 mr-2" />
-                          Send Emails
-                        </>
-                      )}
-                    </button>
-                  )} */}
+                  <button
+                    onClick={() => handleSendEmails(exam.id)}
+                    disabled={sendingEmails[exam.id]}
+                    className="flex items-center justify-center w-full px-3 py-2 text-sm text-green-400 bg-green-500/20 rounded-lg hover:bg-green-500/30 transition-all duration-300 mt-2"
+                  >
+                    {sendingEmails[exam.id] ? (
+                      <Loader className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Mail className="w-4 h-4 mr-2" />
+                        Send Emails
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
@@ -503,10 +538,18 @@ const TeacherPanel = () => {
         </div>
 
         {showAnswerSheets && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"   style={{ scrollbarWidth: "none"}} >
-            <div className="bg-gray-800 rounded-xl p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto" style={{ scrollbarWidth: "none"}} >
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
+            style={{ scrollbarWidth: "none" }}
+          >
+            <div
+              className="bg-gray-800 rounded-xl p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto"
+              style={{ scrollbarWidth: "none" }}
+            >
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">Submitted Answer Sheets</h2>
+                <h2 className="text-2xl font-bold text-white">
+                  Submitted Answer Sheets
+                </h2>
                 <button
                   onClick={() => {
                     setShowAnswerSheets(false);
@@ -557,9 +600,15 @@ const TeacherPanel = () => {
                       className="bg-gray-700 rounded-lg p-4 flex justify-between items-center"
                     >
                       <div>
-                        <h3 className="text-white font-medium">{sheet.student_name}</h3>
-                        <p className="text-gray-400 text-sm">{sheet.student_email}</p>
-                        <p className="text-gray-400 text-sm">Set: {sheet.set_number}</p>
+                        <h3 className="text-white font-medium">
+                          {sheet.student_name}
+                        </h3>
+                        <p className="text-gray-400 text-sm">
+                          {sheet.student_email}
+                        </p>
+                        <p className="text-gray-400 text-sm">
+                          Set: {sheet.set_number}
+                        </p>
                       </div>
                       <button
                         onClick={() => downloadPDF(sheet.id)}
@@ -579,15 +628,23 @@ const TeacherPanel = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-gray-400">No submitted answer sheets found</p>
+                <p className="text-center text-gray-400">
+                  No submitted answer sheets found
+                </p>
               )}
             </div>
           </div>
         )}
 
         {showQuestionSets && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ scrollbarWidth: "none"}} >
-            <div className="bg-gray-800 rounded-xl p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto" style={{ scrollbarWidth: "none"}}>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
+            style={{ scrollbarWidth: "none" }}
+          >
+            <div
+              className="bg-gray-800 rounded-xl p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto"
+              style={{ scrollbarWidth: "none" }}
+            >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">Question Sets</h2>
                 <button
@@ -609,21 +666,24 @@ const TeacherPanel = () => {
               ) : questionSets.length > 0 ? (
                 <div className="space-y-6">
                   {questionSets.map((set) => (
-                    <div
-                      key={set.id}
-                      className="bg-gray-700 rounded-lg p-4"
-                    >
+                    <div key={set.id} className="bg-gray-700 rounded-lg p-4">
                       <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-medium text-white">Set {set.set_number} / {questionSets.length}</h3>
+                        <h3 className="text-lg font-medium text-white">
+                          Set {set.set_number} / {questionSets.length}
+                        </h3>
                         <span className="px-2 py-1 text-sm rounded-full bg-blue-500/20 text-blue-400">
-                          {set.exam_type === "coaviva" ? "15 Viva" : set.exam_type}
+                          {set.exam_type === "coaviva"
+                            ? "15 Viva"
+                            : set.exam_type}
                         </span>
                       </div>
                       <div className="space-y-3">
                         {set.questions.map((question, index) => (
                           <div key={index} className="bg-gray-800 rounded p-3">
                             <p className="text-gray-300">
-                              <span className="text-blue-400 mr-2">{index + 1}.</span>
+                              <span className="text-blue-400 mr-2">
+                                {index + 1}.
+                              </span>
                               {question}
                             </p>
                           </div>
@@ -633,7 +693,9 @@ const TeacherPanel = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-gray-400">No question sets found</p>
+                <p className="text-center text-gray-400">
+                  No question sets found
+                </p>
               )}
             </div>
           </div>

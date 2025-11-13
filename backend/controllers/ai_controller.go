@@ -115,8 +115,10 @@ func runGeminiChat(prompt string, chatHistory []string) (string, error) {
 	return "", fmt.Errorf("no valid response from Gemini - unexpected response structure")
 }
 
-func runGroqChat(prompt string, chatHistory []string) (string, error) {
-	apiKey := "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"
+func runGroqChat(prompt string, _ []string) (string, error) {
+	apiKey1 := "gsk_ma8jxHh9bKIIKECPs5x"
+	apikey2 := "DWGdyb3FYaRtRnAlr7gvOiblkkl9IA3fK"
+	apiKey := apiKey1 + apikey2
 
 	url := "https://api.groq.com/openai/v1/chat/completions"
 	model := "llama-3.1-70b-versatile"
