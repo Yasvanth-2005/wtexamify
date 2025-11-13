@@ -136,7 +136,7 @@ const ExamSession = () => {
     const statuses = [];
 
     try {
-      // Evaluate each answer individually
+      // Evaluate each answer individually ()
       for (let i = 0; i < answerSheet.data.length; i++) {
         const question = Object.keys(answerSheet.data[i])[0];
         const answer = answers[question] || "";
