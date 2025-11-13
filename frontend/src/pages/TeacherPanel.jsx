@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import * as XLSX from "xlsx";
 import {
   Plus,
   Clock,
@@ -12,6 +11,7 @@ import {
   Mail,
 } from "lucide-react";
 import Allapi from "../utils/common";
+import studentsData from "../utils/students_data.json";
 
 const TeacherPanel = () => {
   const [exams, setExams] = useState([]);
@@ -28,11 +28,18 @@ const TeacherPanel = () => {
   const [downloadingScores, setDownloadingScores] = useState(false);
   const [sendingEmails, setSendingEmails] = useState({});
   const [loadingExamStatus, setLoadingExamStatus] = useState({});
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [selectedClass, setSelectedClass] = useState("");
+  const [sendingBulkEmails, setSendingBulkEmails] = useState(false);
+  const [availableClasses, setAvailableClasses] = useState([]);
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     fetchExams();
+    // Get available classes from students_data.json
+    const classes = Object.keys(studentsData);
+    setAvailableClasses(classes);
   }, []);
 
   const downloadAiScores = () => {
@@ -84,6 +91,75 @@ const TeacherPanel = () => {
       toast.error(error.message || "Failed to send emails");
     } finally {
       setSendingEmails((prev) => ({ ...prev, [examId]: false }));
+    }
+  };
+
+  const handleSendBulkEmails = async () => {
+    if (!selectedClass) {
+      toast.error("Please select a class");
+      return;
+    }
+
+    try {
+      setSendingBulkEmails(true);
+      const response = await fetch(Allapi.sendEmails.url, {
+        method: Allapi.sendEmails.method,
+        headers: {
+          Authorization: localStorage.getItem("token"),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ class: selectedClass }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // All emails failed
+        const errorMsg = data.error || "Failed to send emails";
+        if (data.failedEmails && data.failedEmails.length > 0) {
+          toast.error(
+            `${errorMsg}. Failed emails: ${data.failedEmails
+              .slice(0, 5)
+              .join(", ")}${data.failedEmails.length > 5 ? "..." : ""}`
+          );
+        } else {
+          toast.error(errorMsg);
+        }
+        return;
+      }
+
+      // Handle success or partial success
+      if (
+        response.status === 206 ||
+        (data.failedCount && data.failedCount > 0)
+      ) {
+        // Partial success - some emails failed
+        toast.success(data.message || `Emails sent with some failures`);
+        if (data.failedEmails && data.failedEmails.length > 0) {
+          console.warn("Failed emails:", data.failedEmails);
+          // Show a warning toast with failed emails
+          setTimeout(() => {
+            toast.error(
+              `Failed to send to ${
+                data.failedCount
+              } email(s): ${data.failedEmails.slice(0, 3).join(", ")}${
+                data.failedEmails.length > 3 ? "..." : ""
+              }`,
+              { duration: 5000 }
+            );
+          }, 1000);
+        }
+      } else {
+        // All emails sent successfully
+        toast.success(data.message || `Emails sent successfully`);
+      }
+
+      setShowEmailModal(false);
+      setSelectedClass("");
+    } catch (error) {
+      toast.error(error.message || "Failed to send emails");
+    } finally {
+      setSendingBulkEmails(false);
     }
   };
 
@@ -442,6 +518,13 @@ const TeacherPanel = () => {
               <Plus className="w-5 h-5 mr-2" />
               Create Exam
             </button>
+            <button
+              onClick={() => setShowEmailModal(true)}
+              className="flex items-center px-4 py-2 text-white bg-green-500 rounded-lg hover:bg-green-600 transition-all duration-300"
+            >
+              <Mail className="w-5 h-5 mr-2" />
+              Send Emails
+            </button>
           </div>
         </div>
 
@@ -697,6 +780,92 @@ const TeacherPanel = () => {
                   No question sets found
                 </p>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Send Emails Modal */}
+        {showEmailModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-gray-800 rounded-xl p-6 max-w-2xl w-full">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">Send Emails</h2>
+                <button
+                  onClick={() => {
+                    setShowEmailModal(false);
+                    setSelectedClass("");
+                  }}
+                  className="text-gray-400 hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Select Class
+                  </label>
+                  <p className="text-xs text-gray-400 mb-3">
+                    Choose a class to send exam invitation emails to all
+                    students in that class
+                  </p>
+                  <select
+                    value={selectedClass}
+                    onChange={(e) => setSelectedClass(e.target.value)}
+                    className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="">-- Select a Class --</option>
+                    {availableClasses.map((className) => (
+                      <option key={className} value={className}>
+                        {className.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {selectedClass && studentsData[selectedClass] && (
+                  <div className="bg-gray-700 rounded-lg p-4">
+                    <p className="text-sm text-gray-300 mb-2">
+                      Will send emails to{" "}
+                      {studentsData[selectedClass].length - 1} student(s) in{" "}
+                      {selectedClass.toUpperCase()}
+                      <span className="text-gray-500 text-xs ml-2">
+                        (First entry ignored as admin)
+                      </span>
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => {
+                      setShowEmailModal(false);
+                      setSelectedClass("");
+                    }}
+                    className="px-4 py-2 text-gray-300 bg-gray-700 rounded-lg hover:bg-gray-600 transition-all duration-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSendBulkEmails}
+                    disabled={sendingBulkEmails || !selectedClass}
+                    className="flex items-center px-4 py-2 text-white bg-green-500 rounded-lg hover:bg-green-600 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed"
+                  >
+                    {sendingBulkEmails ? (
+                      <>
+                        <Loader className="w-4 h-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="w-4 h-4 mr-2" />
+                        Send Emails
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
