@@ -152,7 +152,7 @@ const ExamSession = () => {
 
         let prompt;
         if (isCodeQuestion) {
-          // For code questions, get detailed analysis with explanation
+          // For code questions, get detailed analysis with explanation ..
           prompt = `Analyze the following code in relation to the question. Provide a detailed evaluation in the following format:
 
 STATUS: [will execute OR will not execute]
