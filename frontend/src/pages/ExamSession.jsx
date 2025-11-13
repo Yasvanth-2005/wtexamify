@@ -152,17 +152,29 @@ const ExamSession = () => {
 
         let prompt;
         if (isCodeQuestion) {
-          // For code questions, check if it will execute
-          prompt = `Analyze the following code in relation to the question and check if it will execute syntactically. Return ONLY one of these two exact phrases: "will execute" or "will not execute". No other text should be included.
+          // For code questions, get detailed analysis with explanation
+          prompt = `Analyze the following code in relation to the question. Provide a detailed evaluation in the following format:
+
+STATUS: [will execute OR will not execute]
+OVERVIEW: [Brief 1-2 sentence overview of the code]
+EXPLANATION: [Detailed explanation of why it will or will not execute, including syntax errors, logic issues, or correctness]
 
 Question: ${question}
-Answer (code): ${answer}`;
+Answer (code): ${answer}
+
+Provide your response in the exact format above.`;
         } else {
-          // For conceptual questions, evaluate the quality of the answer
-          prompt = `Evaluate the following answer for the given question. Determine if the answer is correct and complete. Return ONLY one of these two exact phrases: "will execute" (meaning correct/complete answer) or "will not execute" (meaning incorrect/incomplete answer). No other text should be included.
+          // For conceptual questions, get detailed evaluation
+          prompt = `Evaluate the following answer for the given question. Provide a detailed evaluation in the following format:
+
+STATUS: [will execute (correct/complete) OR will not execute (incorrect/incomplete)]
+OVERVIEW: [Brief 1-2 sentence overview of the answer quality]
+EXPLANATION: [Detailed explanation of what is correct, what is missing, what is incorrect, and why]
 
 Question: ${question}
-Answer: ${answer}`;
+Answer: ${answer}
+
+Provide your response in the exact format above.`;
         }
 
         const statusResponse = await fetch(Allapi.aiScore.url, {
@@ -176,34 +188,65 @@ Answer: ${answer}`;
 
         if (statusResponse.ok) {
           const statusData = await statusResponse.json();
-          const responseText = statusData.response?.trim().toLowerCase() || "";
+          const fullResponse = statusData.response?.trim() || "";
 
-          // Properly check if response is valid
-          if (
-            responseText === "will execute" ||
-            responseText === "will not execute"
-          ) {
-            statuses.push({
-              questionNumber: i + 1,
-              status: responseText,
-            });
-          } else {
-            // If AI returns invalid response, default to "will not execute"
-            console.warn(
-              `Invalid AI response for question ${i + 1}:`,
-              responseText
-            );
-            statuses.push({
-              questionNumber: i + 1,
-              status: "will not execute",
-            });
+          // Parse the detailed response
+          let status = "will not execute";
+          let overview = "";
+          let explanation = "";
+
+          // Extract STATUS
+          const statusMatch = fullResponse.match(
+            /STATUS:\s*(will execute|will not execute)/i
+          );
+          if (statusMatch) {
+            status = statusMatch[1].toLowerCase();
           }
+
+          // Extract OVERVIEW
+          const overviewMatch = fullResponse.match(
+            /OVERVIEW:\s*([^\n]+(?:\n(?!EXPLANATION:)[^\n]+)*)/i
+          );
+          if (overviewMatch) {
+            overview = overviewMatch[1].trim();
+          }
+
+          // Extract EXPLANATION
+          const explanationMatch = fullResponse.match(
+            /EXPLANATION:\s*([\s\S]+)/i
+          );
+          if (explanationMatch) {
+            explanation = explanationMatch[1].trim();
+          }
+
+          // If parsing failed, try to extract status from response
+          if (!statusMatch) {
+            const lowerResponse = fullResponse.toLowerCase();
+            if (lowerResponse.includes("will execute")) {
+              status = "will execute";
+            } else if (lowerResponse.includes("will not execute")) {
+              status = "will not execute";
+            }
+            // Use full response as explanation if structured format not found
+            if (!explanation) {
+              explanation = fullResponse;
+            }
+          }
+
+          statuses.push({
+            questionNumber: i + 1,
+            status: status,
+            overview: overview || "No overview provided",
+            explanation: explanation || "No explanation provided",
+          });
         } else {
           // If API call fails, default to "will not execute"
           console.error(`AI evaluation failed for question ${i + 1}`);
           statuses.push({
             questionNumber: i + 1,
             status: "will not execute",
+            overview: "Evaluation failed",
+            explanation: "Unable to evaluate this answer due to an error.",
           });
         }
       }
@@ -247,7 +290,7 @@ Answer: ${answer}`;
       setAiAnswerStatus(statuses);
       setAiScore(finalAiScore);
       setShowResults(true);
-      return finalAiScore;
+      return { score: finalAiScore, evaluations: statuses };
     } catch (error) {
       console.error("AI evaluation failed:", error);
       return null;
@@ -261,12 +304,17 @@ Answer: ${answer}`;
     try {
       let aiScore = null;
 
+      let aiEvaluations = [];
       if (
         answerSheet?.exam_type === "external" ||
         answerSheet?.exam_type === "viva" ||
         answerSheet?.exam_type === "coaviva"
       ) {
-        aiScore = await evaluateAnswers();
+        const evaluationResult = await evaluateAnswers();
+        if (evaluationResult) {
+          aiScore = evaluationResult.score;
+          aiEvaluations = evaluationResult.evaluations;
+        }
       }
 
       const formattedAnswers = answerSheet.data.map((questionObj) => {
@@ -289,6 +337,7 @@ Answer: ${answer}`;
           answer_sheet_id: answerSheetId,
           answers: formattedAnswers,
           ai_score: aiScore,
+          ai_evaluations: aiEvaluations,
         }),
       });
 

@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import Allapi from '../utils/common';
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import Allapi from "../utils/common";
+import { validateStudentAccess } from "../utils/studentValidation";
 
 const GoogleCallback = () => {
   const navigate = useNavigate();
@@ -9,38 +10,50 @@ const GoogleCallback = () => {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        const code = new URLSearchParams(window.location.search).get('code');
+        const code = new URLSearchParams(window.location.search).get("code");
         if (!code) {
-          throw new Error('No authorization code found');
+          throw new Error("No authorization code found");
         }
 
-        const response = await fetch(`${Allapi.backapi}/auth/googlecallback?code=${code}`);
+        const response = await fetch(
+          `${Allapi.backapi}/auth/googlecallback?code=${code}`
+        );
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || 'Authentication failed');
+          throw new Error(data.error || "Authentication failed");
         }
 
-        console.log('Auth response:', data); // Debug log
+        console.log("Auth response:", data); // Debug log
 
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
 
-        toast.success('Successfully logged in!');
-        
+        toast.success("Successfully logged in!");
+
         // Navigate based on user role
         if (data.user && data.user.role) {
+          // For students, check if they are allowed
+          if (data.user.role === "student") {
+            const isAllowed = validateStudentAccess(data.user.email, "cse4");
+            if (!isAllowed) {
+              console.log("Student ID not found in cse4:", data.user.email);
+              navigate("/not-allowed", { replace: true });
+              return;
+            }
+          }
+
           const targetPath = `/${data.user.role}`;
-          console.log('Navigating to:', targetPath); // Debug log
+          console.log("Navigating to:", targetPath); // Debug log
           navigate(targetPath, { replace: true });
         } else {
-          console.error('User role not found in response:', data);
-          navigate('/login', { replace: true });
+          console.error("User role not found in response:", data);
+          navigate("/login", { replace: true });
         }
       } catch (error) {
-        console.error('Authentication error:', error);
-        toast.error('Authentication failed');
-        navigate('/login');
+        console.error("Authentication error:", error);
+        toast.error("Authentication failed");
+        navigate("/login");
       }
     };
 

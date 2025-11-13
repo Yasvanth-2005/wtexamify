@@ -314,8 +314,9 @@ const TeacherPanel = () => {
             <title>Answer Sheet</title>
             <style>
               body { font-family: Arial, sans-serif; padding: 20px; }
-              .question { margin-bottom: 20px; }
-              .answer { margin-left: 20px; color: #444; }
+              .question { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+              .answer { margin-left: 20px; color: #444; margin-top: 10px; }
+              .ai-evaluation { margin-top: 15px; padding: 10px; background-color: #f5f5f5; border-left: 4px solid #2196F3; }
               @media print {
                 body { padding: 0; }
               }
@@ -331,6 +332,10 @@ const TeacherPanel = () => {
             ${data.answerSheet.data.map((item, index) => {
               const question = Object.keys(item)[0];
               const answer = item[question];
+              // Find AI evaluation for this question
+              const aiEval = data.answerSheet.ai_evaluations?.find(
+                eval => eval.question_number === index + 1
+              );
               return `
                 <div class="question">
                   <h3>Question ${index + 1}:</h3>
@@ -339,6 +344,14 @@ const TeacherPanel = () => {
                     <strong>Answer:</strong><br>
                     ${answer || 'No answer provided'}
                   </div>
+                  ${aiEval ? `
+                    <div class="ai-evaluation" style="margin-top: 15px; padding: 10px; background-color: #f5f5f5; border-left: 4px solid ${aiEval.status === 'will execute' ? '#4CAF50' : '#f44336'};">
+                      <strong>AI Evaluation:</strong><br>
+                      <strong>Status:</strong> <span style="color: ${aiEval.status === 'will execute' ? '#4CAF50' : '#f44336'}">${aiEval.status}</span><br>
+                      ${aiEval.overview ? `<strong>Overview:</strong> ${aiEval.overview}<br>` : ''}
+                      ${aiEval.explanation ? `<strong>Explanation:</strong><br>${aiEval.explanation}` : ''}
+                    </div>
+                  ` : ''}
                 </div>
               `;
             }).join('')}

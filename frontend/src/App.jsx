@@ -10,6 +10,7 @@ import ExamSession from './pages/ExamSession';
 import ProtectedRoute from './components/ProtectedRoute';
 import GoogleCallback from './pages/GoogleCallback';
 import NotFound from './pages/NotFound';
+import NotAllowed from './pages/NotAllowed';
 
 function App() {
   // Get user from localStorage
@@ -40,6 +41,7 @@ function App() {
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/google/callback" element={<GoogleCallback />} />
+        <Route path="/not-allowed" element={<NotAllowed />} />
 
         {/* Protected routes */}
         <Route path="/teacher" element={
