@@ -9,6 +9,7 @@ import {
   FileText,
   Loader,
   Mail,
+  Printer,
 } from "lucide-react";
 import Allapi from "../utils/common";
 import studentsData from "../utils/students_data.json";
@@ -372,6 +373,82 @@ const TeacherPanel = () => {
     }
   };
 
+  // Generate PDF content HTML
+  const generatePDFContent = (data) => {
+    return `
+      <html>
+        <head>
+          <title>Answer Sheet</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .question { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+            .answer { margin-left: 20px; color: #444; margin-top: 10px; white-space: pre-wrap; }
+            .ai-evaluation { margin-top: 15px; padding: 10px; background-color: #f5f5f5; border-left: 4px solid #2196F3; }
+            .ai-overview { margin-top: 10px; padding: 8px; background-color: #e3f2fd; border-radius: 4px; }
+            @media print {
+              body { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Answer Sheet</h1>
+          <p><strong>Student:</strong> ${data.answerSheet.student_name}</p>
+          <p><strong>Set Number:</strong> ${data.answerSheet.set_number}</p>
+          <p><strong>Copy Count:</strong> ${data.answerSheet.copy_count}</p>
+          <p><strong>AI Score:</strong> ${
+            data.answerSheet.ai_score || "N/A"
+          }</p>
+          <hr style="margin: 20px 0;">
+          ${data.answerSheet.data
+            .map((item, index) => {
+              const question = Object.keys(item)[0];
+              const answer = item[question];
+              // Find AI evaluation for this question
+              const aiEval = data.answerSheet.ai_evaluations?.find(
+                (evaluation) => evaluation.question_number === index + 1
+              );
+              return `
+              <div class="question">
+                <h3>Question ${index + 1}:</h3>
+                <p>${question}</p>
+                <div class="answer">
+                  <strong>Answer:</strong><br>
+                  ${answer || "No answer provided"}
+                </div>
+                ${
+                  aiEval
+                    ? `
+                  <div class="ai-evaluation" style="margin-top: 15px; padding: 10px; background-color: #f5f5f5; border-left: 4px solid ${
+                    aiEval.status === "will execute" ? "#4CAF50" : "#f44336"
+                  };">
+                    <strong>AI Evaluation:</strong><br>
+                    <strong>Status:</strong> <span style="color: ${
+                      aiEval.status === "will execute" ? "#4CAF50" : "#f44336"
+                    }">${aiEval.status}</span><br>
+                    ${
+                      aiEval.overview
+                        ? `<div class="ai-overview"><strong>Overview:</strong> ${aiEval.overview}</div>`
+                        : ""
+                    }
+                    ${
+                      aiEval.explanation
+                        ? `<div style="margin-top: 10px;"><strong>Explanation:</strong><br>${aiEval.explanation}</div>`
+                        : ""
+                    }
+                  </div>
+                `
+                    : ""
+                }
+              </div>
+            `;
+            })
+            .join("")}
+        </body>
+      </html>
+    `;
+  };
+
+  // Download PDF as file
   const downloadPDF = async (answerSheetId) => {
     try {
       setDownloadingSheets((prev) => ({ ...prev, [answerSheetId]: true }));
@@ -391,75 +468,48 @@ const TeacherPanel = () => {
       }
 
       const data = await response.json();
+      const printContent = generatePDFContent(data);
 
-      const printContent = `
-        <html>
-          <head>
-            <title>Answer Sheet</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 20px; }
-              .question { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
-              .answer { margin-left: 20px; color: #444; margin-top: 10px; }
-              .ai-evaluation { margin-top: 15px; padding: 10px; background-color: #f5f5f5; border-left: 4px solid #2196F3; }
-              @media print {
-                body { padding: 0; }
-              }
-            </style>
-          </head>
-          <body>
-            <h1>Answer Sheet</h1>
-            <p><strong>Student:</strong> ${data.answerSheet.student_name}</p>
-            <p><strong>Set Number:</strong> ${data.answerSheet.set_number}</p>
-            <p><strong>Copy Count:</strong> ${data.answerSheet.copy_count}</p>
-            <p><strong>Ai Score:</strong> ${data.answerSheet.ai_score}</p>
-            <hr style="margin: 20px 0;">
-            ${data.answerSheet.data
-              .map((item, index) => {
-                const question = Object.keys(item)[0];
-                const answer = item[question];
-                // Find AI evaluation for this question
-                const aiEval = data.answerSheet.ai_evaluations?.find(
-                  (evaluation) => evaluation.question_number === index + 1
-                );
-                return `
-                <div class="question">
-                  <h3>Question ${index + 1}:</h3>
-                  <p>${question}</p>
-                  <div class="answer">
-                    <strong>Answer:</strong><br>
-                    ${answer || "No answer provided"}
-                  </div>
-                  ${
-                    aiEval
-                      ? `
-                    <div class="ai-evaluation" style="margin-top: 15px; padding: 10px; background-color: #f5f5f5; border-left: 4px solid ${
-                      aiEval.status === "will execute" ? "#4CAF50" : "#f44336"
-                    };">
-                      <strong>AI Evaluation:</strong><br>
-                      <strong>Status:</strong> <span style="color: ${
-                        aiEval.status === "will execute" ? "#4CAF50" : "#f44336"
-                      }">${aiEval.status}</span><br>
-                      ${
-                        aiEval.overview
-                          ? `<strong>Overview:</strong> ${aiEval.overview}<br>`
-                          : ""
-                      }
-                      ${
-                        aiEval.explanation
-                          ? `<strong>Explanation:</strong><br>${aiEval.explanation}`
-                          : ""
-                      }
-                    </div>
-                  `
-                      : ""
-                  }
-                </div>
-              `;
-              })
-              .join("")}
-          </body>
-        </html>
-      `;
+      // Create a blob and download it
+      const blob = new Blob([printContent], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `AnswerSheet_${data.answerSheet.student_name}_${data.answerSheet.set_number}.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success("PDF downloaded successfully");
+    } catch (error) {
+      toast.error(error.message || "Failed to download PDF");
+    } finally {
+      setDownloadingSheets((prev) => ({ ...prev, [answerSheetId]: false }));
+    }
+  };
+
+  // Print PDF
+  const printPDF = async (answerSheetId) => {
+    try {
+      setDownloadingSheets((prev) => ({ ...prev, [answerSheetId]: true }));
+
+      const response = await fetch(
+        Allapi.getAnswerSheetById.url(answerSheetId),
+        {
+          headers: {
+            Authorization: localStorage.getItem("token"),
+          },
+          method: "GET",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to load PDF");
+      }
+
+      const data = await response.json();
+      const printContent = generatePDFContent(data);
 
       const iframe = document.createElement("iframe");
       iframe.style.display = "none";
@@ -476,7 +526,7 @@ const TeacherPanel = () => {
         }, 100);
       };
     } catch (error) {
-      toast.error(error.message || "Failed to download PDF");
+      toast.error(error.message || "Failed to print PDF");
     } finally {
       setDownloadingSheets((prev) => ({ ...prev, [answerSheetId]: false }));
     }
@@ -693,20 +743,36 @@ const TeacherPanel = () => {
                           Set: {sheet.set_number}
                         </p>
                       </div>
-                      <button
-                        onClick={() => downloadPDF(sheet.id)}
-                        disabled={downloadingSheets[sheet.id]}
-                        className="flex items-center px-3 py-2 text-sm text-blue-400 bg-blue-500/20 rounded-lg hover:bg-blue-500/30 transition-all duration-300"
-                      >
-                        {downloadingSheets[sheet.id] ? (
-                          <Loader className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <span className="flex items-center">
-                            <Download className="w-4 h-4 mr-2" />
-                            Download PDF
-                          </span>
-                        )}
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => downloadPDF(sheet.id)}
+                          disabled={downloadingSheets[sheet.id]}
+                          className="flex items-center px-3 py-2 text-sm text-blue-400 bg-blue-500/20 rounded-lg hover:bg-blue-500/30 transition-all duration-300"
+                        >
+                          {downloadingSheets[sheet.id] ? (
+                            <Loader className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <span className="flex items-center">
+                              <Download className="w-4 h-4 mr-2" />
+                              Download
+                            </span>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => printPDF(sheet.id)}
+                          disabled={downloadingSheets[sheet.id]}
+                          className="flex items-center px-3 py-2 text-sm text-purple-400 bg-purple-500/20 rounded-lg hover:bg-purple-500/30 transition-all duration-300"
+                        >
+                          {downloadingSheets[sheet.id] ? (
+                            <Loader className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <span className="flex items-center">
+                              <Printer className="w-4 h-4 mr-2" />
+                              Print
+                            </span>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
