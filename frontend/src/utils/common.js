@@ -1,6 +1,8 @@
 const backends = [
   "https://labexamifyrgukt1.onrender.com",
-  "https://labexamify2.onrender.com"
+  "https://labexamify2.onrender.com",
+  "https://wtexamifybackend2.onrender.com",
+  "https://wtexamifybackend2.onrender.com",
 ];
 
 // const backends = ["http://localhost:8080", "http://localhost:8080"];
