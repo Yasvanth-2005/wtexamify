@@ -26,6 +26,9 @@ const ExamSession = () => {
   const [showRefreshModal, setShowRefreshModal] = useState(false);
   const [refreshCode, setRefreshCode] = useState("");
   const [refreshLoading, setRefreshLoading] = useState(false);
+  const [showBackModal, setShowBackModal] = useState(false);
+  const [backPasscode, setBackPasscode] = useState("");
+  const [backLoading, setBackLoading] = useState(false);
   const [copyLoading, setCopyLoading] = useState(false);
   const [aiEvaluating, setAiEvaluating] = useState(false);
   const [aiScore, setAiScore] = useState(null);
@@ -98,7 +101,7 @@ const ExamSession = () => {
   }, [answerSheetId, navigate]);
 
   const handleRefreshQuestions = async () => {
-    if (refreshCode !== "logic404") {
+    if (refreshCode !== "maya404") {
       toast.error("Invalid refresh code");
       return;
     }
@@ -136,154 +139,407 @@ const ExamSession = () => {
     const statuses = [];
 
     try {
-      // Evaluate each answer individually ()
-      for (let i = 0; i < answerSheet.data.length; i++) {
-        const question = Object.keys(answerSheet.data[i])[0];
-        const answer = answers[question] || "";
+      const examType = answerSheet.exam_type;
+      const questionsList = answerSheet.data.map((item, index) => {
+        const question = Object.keys(item)[0];
+        return {
+          questionNumber: index + 1,
+          question: question,
+          answer: answers[question] || "",
+        };
+      });
 
-        // Check if question is about code execution (contains code-related keywords)
-        const isCodeQuestion =
-          /function|code|program|syntax|execute|run|console|log|var|let|const|if|else|for|while|return/i.test(
-            question
-          ) ||
-          /function|code|program|syntax|execute|run|console|log|var|let|const|if|else|for|while|return/i.test(
-            answer
-          );
+      let prompt = "";
+      let tableData = null;
 
-        let prompt;
-        if (isCodeQuestion) {
-          // For code questions, get detailed analysis with explanation
-          prompt = `Analyze the following code in relation to the question. Provide a detailed evaluation in the following format:
+      if (examType === "external") {
+        // Database schema tables data for external exams
+        tableData = {
+          KINGS: [
+            {
+              king_id: 1,
+              king_name: "Ashoka Maurya",
+              dynasty: "Maurya",
+              reign_period: "268–232 BCE",
+              kingdom_region: "Northern India",
+              capital_city: "Pataliputra",
+            },
+            {
+              king_id: 2,
+              king_name: "Rajendra Chola I",
+              dynasty: "Chola",
+              reign_period: "1012–1044 CE",
+              kingdom_region: "South India",
+              capital_city: "Gangaikonda Cholapuram",
+            },
+            {
+              king_id: 3,
+              king_name: "Samudragupta",
+              dynasty: "Gupta",
+              reign_period: "335–375 CE",
+              kingdom_region: "Central India",
+              capital_city: "Pataliputra",
+            },
+            {
+              king_id: 4,
+              king_name: "Krishnadevaraya",
+              dynasty: "Vijayanagara",
+              reign_period: "1509–1529 CE",
+              kingdom_region: "Deccan Region",
+              capital_city: "Hampi",
+            },
+            {
+              king_id: 5,
+              king_name: "Chandragupta II",
+              dynasty: "Gupta",
+              reign_period: "380–415 CE",
+              kingdom_region: "Northern India",
+              capital_city: "Ujjain",
+            },
+          ],
+          AI_TOOLS: [
+            {
+              tool_id: 101,
+              tool_name: "ChatGPT",
+              category: "LLM",
+              provider: "OpenAI",
+              price_per_license: 12000,
+              release_year: 2022,
+            },
+            {
+              tool_id: 102,
+              tool_name: "Gemini",
+              category: "LLM",
+              provider: "Google DeepMind",
+              price_per_license: 11000,
+              release_year: 2024,
+            },
+            {
+              tool_id: 103,
+              tool_name: "Claude",
+              category: "LLM",
+              provider: "Anthropic",
+              price_per_license: 10000,
+              release_year: 2023,
+            },
+            {
+              tool_id: 104,
+              tool_name: "Copilot",
+              category: "Code Assistant",
+              provider: "Microsoft",
+              price_per_license: 8000,
+              release_year: 2021,
+            },
+            {
+              tool_id: 105,
+              tool_name: "Midjourney",
+              category: "Image Gen AI",
+              provider: "Midjourney Inc.",
+              price_per_license: 7000,
+              release_year: 2022,
+            },
+            {
+              tool_id: 106,
+              tool_name: "DALL·E 3",
+              category: "Image Gen AI",
+              provider: "OpenAI",
+              price_per_license: 7500,
+              release_year: 2023,
+            },
+          ],
+          VENDORS: [
+            {
+              vendor_id: 201,
+              vendor_name: "OpenAI Technologies",
+              hq_region: "San Francisco, USA",
+              rating: 4.9,
+              contact_email: "support@openai.com",
+              active_status: "Active",
+            },
+            {
+              vendor_id: 202,
+              vendor_name: "Google DeepMind",
+              hq_region: "London, UK",
+              rating: 4.8,
+              contact_email: "info@deepmind.com",
+              active_status: "Active",
+            },
+            {
+              vendor_id: 203,
+              vendor_name: "Anthropic AI",
+              hq_region: "San Francisco, USA",
+              rating: 4.7,
+              contact_email: "contact@anthropic.com",
+              active_status: "Active",
+            },
+            {
+              vendor_id: 204,
+              vendor_name: "Microsoft Corporation",
+              hq_region: "Redmond, USA",
+              rating: 4.6,
+              contact_email: "ai-support@microsoft.com",
+              active_status: "Active",
+            },
+            {
+              vendor_id: 205,
+              vendor_name: "Midjourney Labs",
+              hq_region: "Los Angeles, USA",
+              rating: 4.5,
+              contact_email: "hello@midjourney.com",
+              active_status: "Active",
+            },
+          ],
+          PURCHASES: [
+            {
+              purchase_id: 5001,
+              king_id: 1,
+              tool_id: 101,
+              vendor_id: 201,
+              purchase_date: "2025-01-15",
+              total_cost: 24000,
+            },
+            {
+              purchase_id: 5002,
+              king_id: 2,
+              tool_id: 104,
+              vendor_id: 204,
+              purchase_date: "2025-02-20",
+              total_cost: 16000,
+            },
+            {
+              purchase_id: 5003,
+              king_id: 3,
+              tool_id: 102,
+              vendor_id: 202,
+              purchase_date: "2025-03-05",
+              total_cost: 22000,
+            },
+            {
+              purchase_id: 5004,
+              king_id: 4,
+              tool_id: 105,
+              vendor_id: 205,
+              purchase_date: "2025-04-10",
+              total_cost: 14000,
+            },
+            {
+              purchase_id: 5005,
+              king_id: 5,
+              tool_id: 103,
+              vendor_id: 203,
+              purchase_date: "2025-05-25",
+              total_cost: 20000,
+            },
+            {
+              purchase_id: 5006,
+              king_id: 1,
+              tool_id: 106,
+              vendor_id: 201,
+              purchase_date: "2025-07-02",
+              total_cost: 15000,
+            },
+          ],
+        };
 
+        prompt = `You are evaluating SQL/external exam answers. Use the following database schema tables as reference:
+
+KINGS Table:
+${JSON.stringify(tableData.KINGS, null, 2)}
+
+AI_TOOLS Table:
+${JSON.stringify(tableData.AI_TOOLS, null, 2)}
+
+VENDORS Table:
+${JSON.stringify(tableData.VENDORS, null, 2)}
+
+PURCHASES Table:
+${JSON.stringify(tableData.PURCHASES, null, 2)}
+
+Evaluate ALL the following questions and answers. For EACH question, provide your evaluation in this EXACT format:
+
+QUESTION 1:
 STATUS: [will execute OR will not execute]
-OVERVIEW: [Brief 1-2 sentence overview of the code]
-EXPLANATION: [Detailed explanation of why it will or will not execute, including syntax errors, logic issues, or correctness]
+OVERVIEW: [Brief 1-2 sentence overview]
+EXPLANATION: [Detailed explanation]
 
-Question: ${question}
-Answer (code): ${answer}
+QUESTION 2:
+STATUS: [will execute OR will not execute]
+OVERVIEW: [Brief 1-2 sentence overview]
+EXPLANATION: [Detailed explanation]
 
-Provide your response in the exact format above.`;
-        } else {
-          // For conceptual questions, get detailed evaluation
-          prompt = `Evaluate the following answer for the given question. Provide a detailed evaluation in the following format:
+(Continue for all questions)
 
-STATUS: [will execute (correct/complete) OR will not execute (incorrect/incomplete)]
-OVERVIEW: [Brief 1-2 sentence overview of the answer quality]
-EXPLANATION: [Detailed explanation of what is correct, what is missing, what is incorrect, and why]
+Questions and Answers:
+${questionsList
+  .map(
+    (q) => `Question ${q.questionNumber}: ${q.question}\nAnswer: ${q.answer}`
+  )
+  .join("\n\n")}
 
-Question: ${question}
-Answer: ${answer}
+Provide your response in the exact format above for ALL questions.`;
+      } else if (examType === "viva" || examType === "coaviva") {
+        prompt = `You are evaluating viva exam answers. Evaluate ALL the following questions and answers. For EACH question, determine if the answer is:
+- "correct" (fully correct and complete)
+- "partial" (partially correct or incomplete)
+- "incorrect" (wrong or irrelevant)
 
-Provide your response in the exact format above.`;
-        }
+Provide your evaluation in this EXACT format:
 
-        const statusResponse = await fetch(Allapi.aiScore.url, {
-          method: "POST",
-          headers: {
-            Authorization: localStorage.getItem("token"),
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ prompt }),
-        });
+QUESTION 1:
+STATUS: [correct OR partial OR incorrect]
+OVERVIEW: [Brief 1-2 sentence overview]
+EXPLANATION: [Detailed explanation]
 
-        if (statusResponse.ok) {
-          const statusData = await statusResponse.json();
-          const fullResponse = statusData.response?.trim() || "";
+QUESTION 2:
+STATUS: [correct OR partial OR incorrect]
+OVERVIEW: [Brief 1-2 sentence overview]
+EXPLANATION: [Detailed explanation]
 
-          // Parse the detailed response
-          let status = "will not execute";
-          let overview = "";
-          let explanation = "";
+(Continue for all questions)
 
-          // Extract STATUS
-          const statusMatch = fullResponse.match(
-            /STATUS:\s*(will execute|will not execute)/i
-          );
-          if (statusMatch) {
-            status = statusMatch[1].toLowerCase();
-          }
+At the end, provide:
+TOTAL_SCORE: [number out of 20]
+(Scoring: correct = 2 points, partial = 1 point, incorrect = 0 points)
 
-          // Extract OVERVIEW
-          const overviewMatch = fullResponse.match(
-            /OVERVIEW:\s*([^\n]+(?:\n(?!EXPLANATION:)[^\n]+)*)/i
-          );
-          if (overviewMatch) {
-            overview = overviewMatch[1].trim();
-          }
+Questions and Answers:
+${questionsList
+  .map(
+    (q) => `Question ${q.questionNumber}: ${q.question}\nAnswer: ${q.answer}`
+  )
+  .join("\n\n")}
 
-          // Extract EXPLANATION
-          const explanationMatch = fullResponse.match(
-            /EXPLANATION:\s*([\s\S]+)/i
-          );
-          if (explanationMatch) {
-            explanation = explanationMatch[1].trim();
-          }
+Provide your response in the exact format above for ALL questions, followed by TOTAL_SCORE.`;
+      } else {
+        // Fallback for other exam types
+        prompt = `Evaluate the following questions and answers. For EACH question, provide your evaluation in this EXACT format:
 
-          // If parsing failed, try to extract status from response
-          if (!statusMatch) {
-            const lowerResponse = fullResponse.toLowerCase();
-            if (lowerResponse.includes("will execute")) {
-              status = "will execute";
-            } else if (lowerResponse.includes("will not execute")) {
-              status = "will not execute";
-            }
-            // Use full response as explanation if structured format not found
-            if (!explanation) {
-              explanation = fullResponse;
-            }
-          }
+QUESTION 1:
+STATUS: [will execute OR will not execute]
+OVERVIEW: [Brief 1-2 sentence overview]
+EXPLANATION: [Detailed explanation]
 
-          statuses.push({
-            questionNumber: i + 1,
-            status: status,
-            overview: overview || "No overview provided",
-            explanation: explanation || "No explanation provided",
-          });
-        } else {
-          // If API call fails, default to "will not execute"
-          console.error(`AI evaluation failed for question ${i + 1}`);
-          statuses.push({
-            questionNumber: i + 1,
-            status: "will not execute",
-            overview: "Evaluation failed",
-            explanation: "Unable to evaluate this answer due to an error.",
-          });
-        }
+Questions and Answers:
+${questionsList
+  .map(
+    (q) => `Question ${q.questionNumber}: ${q.question}\nAnswer: ${q.answer}`
+  )
+  .join("\n\n")}`;
       }
 
-      // Calculate final score
-      const questions = answerSheet.data.map((item) => Object.keys(item)[0]);
-
-      const scoreResponse = await fetch(Allapi.aiScore.url, {
+      // Single API request for all questions
+      const response = await fetch(Allapi.aiScore.url, {
         method: "POST",
         headers: {
           Authorization: localStorage.getItem("token"),
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          prompt: `Based on these answers for the questions in this data ${questions}, provide a single numerical score out of 100. Only return the number: ${JSON.stringify(
-            answers
-          )}`,
+          prompt: prompt,
+          exam_type: examType,
+          table_data: tableData,
+          questions: questionsList,
         }),
       });
 
-      if (scoreResponse.ok) {
-        const scoreData = await scoreResponse.json();
-        const scoreText = scoreData.response?.trim() || "";
+      if (response.ok) {
+        const data = await response.json();
+        const fullResponse = data.response?.trim() || "";
 
-        // Extract number from response (handle cases where AI returns text with number)
-        const scoreMatch = scoreText.match(/\d+(\.\d+)?/);
-        if (scoreMatch) {
-          finalAiScore = parseFloat(scoreMatch[0]);
+        // Parse response for each question
+        for (let i = 0; i < questionsList.length; i++) {
+          const questionNum = i + 1;
+          const questionRegex = new RegExp(
+            `QUESTION\\s+${questionNum}:\\s*([\\s\\S]*?)(?=QUESTION\\s+${
+              questionNum + 1
+            }:|TOTAL_SCORE:|$)`,
+            "i"
+          );
+          const questionMatch = fullResponse.match(questionRegex);
+
+          let status =
+            examType === "viva" || examType === "coaviva"
+              ? "incorrect"
+              : "will not execute";
+          let overview = "";
+          let explanation = "";
+
+          if (questionMatch) {
+            const questionSection = questionMatch[1];
+
+            // Extract STATUS
+            const statusMatch = questionSection.match(
+              /STATUS:\s*(will execute|will not execute|correct|partial|incorrect)/i
+            );
+            if (statusMatch) {
+              status = statusMatch[1].toLowerCase();
+            }
+
+            // Extract OVERVIEW
+            const overviewMatch = questionSection.match(
+              /OVERVIEW:\s*([^\n]+(?:\n(?!EXPLANATION:)[^\n]+)*)/i
+            );
+            if (overviewMatch) {
+              overview = overviewMatch[1].trim();
+            }
+
+            // Extract EXPLANATION
+            const explanationMatch = questionSection.match(
+              /EXPLANATION:\s*([\s\S]+?)(?=QUESTION|TOTAL_SCORE|$)/i
+            );
+            if (explanationMatch) {
+              explanation = explanationMatch[1].trim();
+            }
+          }
+
+          statuses.push({
+            questionNumber: questionNum,
+            status: status,
+            overview: overview || "No overview provided",
+            explanation: explanation || "No explanation provided",
+          });
+        }
+
+        // Calculate score
+        if (examType === "viva" || examType === "coaviva") {
+          // Extract TOTAL_SCORE from response
+          const scoreMatch = fullResponse.match(/TOTAL_SCORE:\s*(\d+)/i);
+          if (scoreMatch) {
+            finalAiScore = parseInt(scoreMatch[1], 10);
+            // Ensure score is between 0 and 20
+            if (finalAiScore > 20) finalAiScore = 20;
+            if (finalAiScore < 0) finalAiScore = 0;
+          } else {
+            // Calculate from statuses if TOTAL_SCORE not found
+            finalAiScore = statuses.reduce((sum, evaluation) => {
+              if (evaluation.status === "correct") return sum + 2;
+              if (evaluation.status === "partial") return sum + 1;
+              return sum;
+            }, 0);
+          }
+        } else {
+          // For external exams, calculate score based on "will execute" status
+          const executeCount = statuses.filter(
+            (s) => s.status === "will execute"
+          ).length;
+          finalAiScore = Math.round((executeCount / statuses.length) * 100);
           // Ensure score is between 0 and 100
           if (finalAiScore > 100) finalAiScore = 100;
           if (finalAiScore < 0) finalAiScore = 0;
-        } else {
-          console.warn("Could not extract score from AI response:", scoreText);
-          finalAiScore = 0;
         }
       } else {
-        console.error("Failed to get AI score");
+        // If API call fails, set default values
+        console.error("AI evaluation failed");
+        for (let i = 0; i < questionsList.length; i++) {
+          statuses.push({
+            questionNumber: i + 1,
+            status:
+              examType === "viva" || examType === "coaviva"
+                ? "incorrect"
+                : "will not execute",
+            overview: "Evaluation failed",
+            explanation: "Unable to evaluate this answer due to an error.",
+          });
+        }
         finalAiScore = 0;
       }
 
@@ -590,6 +846,42 @@ Provide your response in the exact format above.`;
     };
   }, [answerSheet, markAsCopied]); // Include markAsCopied in dependencies
 
+  // Handle browser back button with passcode protection
+  useEffect(() => {
+    if (!answerSheet || answerSheet.submit_status) return;
+
+    const handlePopState = () => {
+      // Show modal and push state back to prevent navigation
+      setShowBackModal(true);
+      window.history.pushState(null, "", window.location.href);
+    };
+
+    // Push initial state to enable back button detection
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [answerSheet]);
+
+  const handleBackWithPasscode = async () => {
+    if (backPasscode !== "maya404") {
+      toast.error("Invalid passcode");
+      return;
+    }
+
+    setBackLoading(true);
+    try {
+      // Allow navigation after passcode verification
+      navigate("/student");
+    } catch (error) {
+      toast.error("Failed to navigate");
+    } finally {
+      setBackLoading(false);
+    }
+  };
+
   const handleRemoveCopied = async () => {
     try {
       setCopyLoading(true);
@@ -606,7 +898,17 @@ Provide your response in the exact format above.`;
 
       // Reset local state - detection continues even after reset
       setCopied(false);
-      setAnswers({});
+      
+      // For viva exams, don't clear answers in the last 5 minutes (300 seconds)
+      const isViva = answerSheet?.exam_type === "viva" || answerSheet?.exam_type === "coaviva";
+      const isLast5Minutes = timeLeft !== null && timeLeft <= 300;
+      
+      if (!isViva || !isLast5Minutes) {
+        setAnswers({});
+      } else {
+        toast.info("Answers preserved in the last 5 minutes");
+      }
+      
       setShowPasscodeModal(false);
       setPasscode("");
       // Note: We don't reset localCopyCount - it continues tracking
@@ -675,7 +977,16 @@ Provide your response in the exact format above.`;
 
           <div className="mb-8">
             <div className="text-6xl font-bold text-blue-500 text-center mb-4">
-              {aiScore}
+              {aiScore !== null ? aiScore : 0}
+              {answerSheet?.exam_type === "external" && (
+                <span className="text-3xl text-gray-400"> / 100</span>
+              )}
+              {answerSheet?.exam_type === "viva" && (
+                <span className="text-3xl text-gray-400"> / 20</span>
+              )}
+              {answerSheet?.exam_type === "coaviva" && (
+                <span className="text-3xl text-gray-400"> / 20</span>
+              )}
             </div>
             <p className="text-xl text-gray-400 text-center">
               Your AI-Generated Score
@@ -817,13 +1128,13 @@ Provide your response in the exact format above.`;
       >
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-6">
-            {/* <button
-              onClick={() => navigate('/student')}
+            <button
+              onClick={() => setShowBackModal(true)}
               className="flex items-center text-blue-400 hover:text-blue-300 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
               Back to Dashboard
-            </button> */}
+            </button>
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setShowRefreshModal(true)}
@@ -851,6 +1162,593 @@ Provide your response in the exact format above.`;
                   External Exam
                 </h1>
                 <p className="text-gray-400">Set {answerSheet.set_number}</p>
+              </div>
+
+              {/* Database Schema Tables */}
+              <div className="space-y-6 mb-8">
+                <h2 className="text-2xl font-bold text-white mb-4">
+                  Database Schema
+                </h2>
+
+                {/* KINGS Table */}
+                <div className="bg-gray-700 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-blue-400 mb-4">
+                    Table Name :- KINGS
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-gray-600 text-sm">
+                      <thead>
+                        <tr className="bg-gray-800">
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            king_id
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            king_name
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            dynasty
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            reign_period
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            kingdom_region
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            capital_city
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="text-gray-300">
+                          <td className="border border-gray-600 px-3 py-2">
+                            1
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Ashoka Maurya
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Maurya
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            268–232 BCE
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Northern India
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Pataliputra
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300 bg-gray-800/50">
+                          <td className="border border-gray-600 px-3 py-2">
+                            2
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Rajendra Chola I
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Chola
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            1012–1044 CE
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            South India
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Gangaikonda Cholapuram
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300">
+                          <td className="border border-gray-600 px-3 py-2">
+                            3
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Samudragupta
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Gupta
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            335–375 CE
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Central India
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Pataliputra
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300 bg-gray-800/50">
+                          <td className="border border-gray-600 px-3 py-2">
+                            4
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Krishnadevaraya
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Vijayanagara
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            1509–1529 CE
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Deccan Region
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Hampi
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300">
+                          <td className="border border-gray-600 px-3 py-2">
+                            5
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Chandragupta II
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Gupta
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            380–415 CE
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Northern India
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Ujjain
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* AI_TOOLS Table */}
+                <div className="bg-gray-700 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-blue-400 mb-4">
+                    Table Name :- AI_TOOLS
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-gray-600 text-sm">
+                      <thead>
+                        <tr className="bg-gray-800">
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            tool_id
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            tool_name
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            category
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            provider
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            price_per_license
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            release_year
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="text-gray-300">
+                          <td className="border border-gray-600 px-3 py-2">
+                            101
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            ChatGPT
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            LLM
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            OpenAI
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            12000
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            2022
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300 bg-gray-800/50">
+                          <td className="border border-gray-600 px-3 py-2">
+                            102
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Gemini
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            LLM
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Google DeepMind
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            11000
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            2024
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300">
+                          <td className="border border-gray-600 px-3 py-2">
+                            103
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Claude
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            LLM
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Anthropic
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            10000
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            2023
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300 bg-gray-800/50">
+                          <td className="border border-gray-600 px-3 py-2">
+                            104
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Copilot
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Code Assistant
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Microsoft
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            8000
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            2021
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300">
+                          <td className="border border-gray-600 px-3 py-2">
+                            105
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Midjourney
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Image Gen AI
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Midjourney Inc.
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            7000
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            2022
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300 bg-gray-800/50">
+                          <td className="border border-gray-600 px-3 py-2">
+                            106
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            DALL·E 3
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Image Gen AI
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            OpenAI
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            7500
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            2023
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* VENDORS Table */}
+                <div className="bg-gray-700 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-blue-400 mb-4">
+                    Table Name :- VENDORS
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-gray-600 text-sm">
+                      <thead>
+                        <tr className="bg-gray-800">
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            vendor_id
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            vendor_name
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            hq_region
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            rating
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            contact_email
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            active_status
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="text-gray-300">
+                          <td className="border border-gray-600 px-3 py-2">
+                            201
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            OpenAI Technologies
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            San Francisco, USA
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            4.9
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            support@openai.com
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Active
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300 bg-gray-800/50">
+                          <td className="border border-gray-600 px-3 py-2">
+                            202
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Google DeepMind
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            London, UK
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            4.8
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            info@deepmind.com
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Active
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300">
+                          <td className="border border-gray-600 px-3 py-2">
+                            203
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Anthropic AI
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            San Francisco, USA
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            4.7
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            contact@anthropic.com
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Active
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300 bg-gray-800/50">
+                          <td className="border border-gray-600 px-3 py-2">
+                            204
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Microsoft Corporation
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Redmond, USA
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            4.6
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            ai-support@microsoft.com
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Active
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300">
+                          <td className="border border-gray-600 px-3 py-2">
+                            205
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Midjourney Labs
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Los Angeles, USA
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            4.5
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            hello@midjourney.com
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Active
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* PURCHASES Table */}
+                <div className="bg-gray-700 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-blue-400 mb-4">
+                    Table Name :- PURCHASES
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-gray-600 text-sm">
+                      <thead>
+                        <tr className="bg-gray-800">
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            purchase_id
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            king_id
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            tool_id
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            vendor_id
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            purchase_date
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            total_cost
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="text-gray-300">
+                          <td className="border border-gray-600 px-3 py-2">
+                            5001
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            1
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            101
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            201
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            2025-01-15
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            24000
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300 bg-gray-800/50">
+                          <td className="border border-gray-600 px-3 py-2">
+                            5002
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            2
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            104
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            204
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            2025-02-20
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            16000
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300">
+                          <td className="border border-gray-600 px-3 py-2">
+                            5003
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            3
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            102
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            202
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            2025-03-05
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            22000
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300 bg-gray-800/50">
+                          <td className="border border-gray-600 px-3 py-2">
+                            5004
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            4
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            105
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            205
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            2025-04-10
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            14000
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300">
+                          <td className="border border-gray-600 px-3 py-2">
+                            5005
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            5
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            103
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            203
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            2025-05-25
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            20000
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300 bg-gray-800/50">
+                          <td className="border border-gray-600 px-3 py-2">
+                            5006
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            1
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            106
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            201
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            2025-07-02
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            15000
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-6">
@@ -966,6 +1864,13 @@ Provide your response in the exact format above.`;
         <div className="bg-gray-800 rounded-xl border-2 border-blue-500/20 p-6">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowBackModal(true)}
+                className="flex items-center text-blue-400 hover:text-blue-300 transition-colors mr-2"
+              >
+                <ArrowLeft className="w-5 h-5 mr-2" />
+                Back
+              </button>
               <h1 className="text-2xl font-bold text-white">Exam Session</h1>
               <span className="px-3 py-1 text-sm bg-blue-500/20 text-blue-400 rounded-lg">
                 Set {answerSheet.set_number}
@@ -1181,6 +2086,59 @@ Provide your response in the exact format above.`;
                 ) : (
                   "Refresh"
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Back Button Passcode Modal */}
+      {showBackModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full">
+            <h2 className="text-xl font-bold text-white mb-4">
+              Enter Passcode to Go Back
+            </h2>
+            <p className="text-gray-400 mb-4">
+              Please enter the passcode to navigate back to the dashboard
+            </p>
+            <input
+              type="password"
+              value={backPasscode}
+              onChange={(e) => setBackPasscode(e.target.value)}
+              placeholder="Enter passcode"
+              autoComplete="off"
+              spellCheck="false"
+              data-form-type="other"
+              data-lpignore="true"
+              data-1p-ignore="true"
+              data-dashlane-ignore="true"
+              data-bitwarden-watching="false"
+              name="back-passcode-field"
+              id="back-passcode-field"
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 mb-4"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleBackWithPasscode();
+                }
+              }}
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowBackModal(false);
+                  setBackPasscode("");
+                }}
+                className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBackWithPasscode}
+                disabled={backLoading}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center"
+              >
+                {backLoading ? "Verifying..." : "Verify & Go Back"}
               </button>
             </div>
           </div>
