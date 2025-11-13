@@ -101,24 +101,28 @@ func GoogleCallback(c *gin.Context) {
 	googleID, _ := userInfo["id"].(string)
 	image, _ := userInfo["picture"].(string)
 
-	// Check if email is allowed (either in teacher/admin whitelist or legitimate RGUKT student)
-	if !isEmailAllowed(email) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied. Your email is not authorized to use this system."})
-		return
-	}
-
-	// Determine role: First check if in teacher/admin whitelist, then check if RGUKT student
-	role := "student" // Default to student for RGUKT emails
+	// Check if email is in teacher/admin whitelist
 	isTeacher := false
-	
-	// Check if email is in the teacher/admin whitelist first
 	for _, allowedEmail := range allowedTeacherEmails {
 		if email == allowedEmail {
 			isTeacher = true
 			break
 		}
 	}
-	
+
+	// If not a teacher, check if it's a valid RGUKT student email
+	if !isTeacher {
+		if !strings.HasSuffix(email, "@rguktn.ac.in") {
+			// Not a teacher and not an RGUKT email - deny access
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied. Your email is not authorized to use this system."})
+			return
+		}
+		// RGUKT email - will be validated on frontend against student list
+		// Backend allows it through, but frontend will check if student ID is in cse4 list
+	}
+
+	// Determine role
+	role := "student"
 	if isTeacher {
 		role = "teacher"
 	} else if strings.HasSuffix(email, "@rguktn.ac.in") {
