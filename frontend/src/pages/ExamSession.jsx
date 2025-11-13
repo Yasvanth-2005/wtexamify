@@ -898,17 +898,19 @@ ${questionsList
 
       // Reset local state - detection continues even after reset
       setCopied(false);
-      
+
       // For viva exams, don't clear answers in the last 5 minutes (300 seconds)
-      const isViva = answerSheet?.exam_type === "viva" || answerSheet?.exam_type === "coaviva";
+      const isViva =
+        answerSheet?.exam_type === "viva" ||
+        answerSheet?.exam_type === "coaviva";
       const isLast5Minutes = timeLeft !== null && timeLeft <= 300;
-      
+
       if (!isViva || !isLast5Minutes) {
         setAnswers({});
       } else {
         toast.info("Answers preserved in the last 5 minutes");
       }
-      
+
       setShowPasscodeModal(false);
       setPasscode("");
       // Note: We don't reset localCopyCount - it continues tracking
