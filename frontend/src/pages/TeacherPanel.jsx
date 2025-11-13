@@ -381,12 +381,18 @@ const TeacherPanel = () => {
           <title>Answer Sheet</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 20px; }
-            .question { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
-            .answer { margin-left: 20px; color: #444; margin-top: 10px; white-space: pre-wrap; }
-            .ai-evaluation { margin-top: 15px; padding: 10px; background-color: #f5f5f5; border-left: 4px solid #2196F3; }
-            .ai-overview { margin-top: 10px; padding: 8px; background-color: #e3f2fd; border-radius: 4px; }
+            .question { margin-bottom: 30px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+            .question-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; }
+            .answer-section { margin-top: 15px; margin-left: 20px; color: #444; white-space: pre-wrap; }
+            .ai-section { margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-left: 4px solid #2196F3; border-radius: 4px; }
+            .ai-explanation { margin-top: 10px; padding: 10px; background-color: #fff; border-radius: 4px; }
+            .ai-overview { margin-top: 10px; padding: 10px; background-color: #e3f2fd; border-radius: 4px; }
+            .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: bold; margin-left: 10px; }
+            .status-execute { background-color: #4CAF50; color: white; }
+            .status-not-execute { background-color: #f44336; color: white; }
             @media print {
               body { padding: 0; }
+              .question { page-break-inside: avoid; }
             }
           </style>
         </head>
@@ -403,38 +409,56 @@ const TeacherPanel = () => {
             .map((item, index) => {
               const question = Object.keys(item)[0];
               const answer = item[question];
-              // Find AI evaluation for this question
-              const aiEval = data.answerSheet.ai_evaluations?.find(
-                (evaluation) => evaluation.question_number === index + 1
+              const questionNumber = index + 1;
+
+              // Map AI evaluation - handle both 0-based and 1-based indexing
+              // First try to find by question_number matching index+1
+              let aiEval = data.answerSheet.ai_evaluations?.find(
+                (evaluation) => evaluation.question_number === questionNumber
               );
+
+              // If not found, use array index (in case question_number is wrong or 0-based)
+              if (
+                !aiEval &&
+                data.answerSheet.ai_evaluations &&
+                data.answerSheet.ai_evaluations[index]
+              ) {
+                aiEval = data.answerSheet.ai_evaluations[index];
+              }
+
               return `
               <div class="question">
-                <h3>Question ${index + 1}:</h3>
+                <div class="question-title">Question ${questionNumber}</div>
                 <p>${question}</p>
-                <div class="answer">
-                  <strong>Answer:</strong><br>
-                  ${answer || "No answer provided"}
-                </div>
+                <p><strong>Answer:</strong></p>
+                <p>${answer || "No answer provided"}</p>
                 ${
                   aiEval
                     ? `
-                  <div class="ai-evaluation" style="margin-top: 15px; padding: 10px; background-color: #f5f5f5; border-left: 4px solid ${
-                    aiEval.status === "will execute" ? "#4CAF50" : "#f44336"
-                  };">
-                    <strong>AI Evaluation:</strong><br>
-                    <strong>Status:</strong> <span style="color: ${
-                      aiEval.status === "will execute" ? "#4CAF50" : "#f44336"
-                    }">${aiEval.status}</span><br>
-                    ${
-                      aiEval.overview
-                        ? `<div class="ai-overview"><strong>Overview:</strong> ${aiEval.overview}</div>`
-                        : ""
-                    }
+                  <div class="ai-section">
+                    <strong>AI Overview & Explanation:</strong><br>
                     ${
                       aiEval.explanation
-                        ? `<div style="margin-top: 10px;"><strong>Explanation:</strong><br>${aiEval.explanation}</div>`
+                        ? `<div class="ai-explanation">
+                            <strong>Explanation:</strong> ${aiEval.explanation}
+                          </div>`
                         : ""
                     }
+                    ${
+                      aiEval.overview
+                        ? `<div class="ai-overview">
+                            <strong>Overview:</strong> ${aiEval.overview}
+                          </div>`
+                        : ""
+                    }
+                    <div style="margin-top: 10px;">
+                      <strong>Status:</strong>
+                      <span class="status-badge ${
+                        aiEval.status === "will execute"
+                          ? "status-execute"
+                          : "status-not-execute"
+                      }">${aiEval.status}</span>
+                    </div>
                   </div>
                 `
                     : ""
