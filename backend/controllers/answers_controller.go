@@ -418,7 +418,7 @@ func GetAllSubmittedAnswerSheets(c *gin.Context) {
 
 	// Find submitted answer sheets and sort by StudentEmail in ascending order
 	var answerSheets []models.AnswerSheet
-	opts := options.Find().SetSort(bson.D{{"student_email", 1}}) // Sort in ascending order
+	opts := options.Find().SetSort(bson.D{{Key: "student_email", Value: 1}}) // Sort in ascending order
 	cursor, err := answerSheetCollection.Find(context.TODO(), bson.M{
 		"exam_id":       examID,
 		"submit_status": true, // Only fetch submitted answer sheets

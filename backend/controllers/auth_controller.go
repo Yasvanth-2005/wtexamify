@@ -118,7 +118,7 @@ func GoogleCallback(c *gin.Context) {
 			return
 		}
 		// RGUKT email - will be validated on frontend against student list
-		// Backend allows it through, but frontend will check if student ID is in cse4 list
+		// Backend allows it through, but frontend will check if student ID is in cse5 or cse6 list
 	}
 
 	// Determine role
