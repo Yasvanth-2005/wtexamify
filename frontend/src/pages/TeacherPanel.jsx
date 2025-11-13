@@ -650,20 +650,6 @@ const TeacherPanel = () => {
                       View Sets
                     </button>
                   </div>
-                  <button
-                    onClick={() => handleSendEmails(exam.id)}
-                    disabled={sendingEmails[exam.id]}
-                    className="flex items-center justify-center w-full px-3 py-2 text-sm text-green-400 bg-green-500/20 rounded-lg hover:bg-green-500/30 transition-all duration-300 mt-2"
-                  >
-                    {sendingEmails[exam.id] ? (
-                      <Loader className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Mail className="w-4 h-4 mr-2" />
-                        Send Emails
-                      </>
-                    )}
-                  </button>
                 </div>
               </div>
             </div>
