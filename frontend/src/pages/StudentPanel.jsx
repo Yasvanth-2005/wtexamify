@@ -49,7 +49,8 @@ const StudentPanel = () => {
   // Check if student is allowed on component mount - only run once
   useEffect(() => {
     if (user && user.role === "student") {
-      const isAllowed = validateStudentAccess(user.email, "cse4");
+      // Check if student is in cse5 or cse6
+      const isAllowed = validateStudentAccess(user.email);
       if (!isAllowed) {
         navigate("/not-allowed", { replace: true });
         return;

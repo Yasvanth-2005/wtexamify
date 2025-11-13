@@ -22,7 +22,10 @@ const GoogleCallback = () => {
 
         if (!response.ok) {
           // If access is denied, redirect to not-allowed page
-          if (response.status === 403 || data.error?.includes("Access denied")) {
+          if (
+            response.status === 403 ||
+            data.error?.includes("Access denied")
+          ) {
             localStorage.clear(); // Clear any existing auth data
             navigate("/not-allowed", { replace: true });
             return;
@@ -39,11 +42,14 @@ const GoogleCallback = () => {
 
         // Navigate based on user role
         if (data.user && data.user.role) {
-          // For students, check if they are allowed (must be in cse4 list)
+          // For students, check if they are allowed (must be in cse5 or cse6 list)
           if (data.user.role === "student") {
-            const isAllowed = validateStudentAccess(data.user.email, "cse4");
+            const isAllowed = validateStudentAccess(data.user.email);
             if (!isAllowed) {
-              console.log("Student ID not found in cse4:", data.user.email);
+              console.log(
+                "Student ID not found in cse5 or cse6:",
+                data.user.email
+              );
               localStorage.clear(); // Clear auth data
               navigate("/not-allowed", { replace: true });
               return;

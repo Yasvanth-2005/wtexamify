@@ -29,15 +29,22 @@ export const isStudentAllowed = (studentId, className = "cse4") => {
 /**
  * Validates if a user email is allowed based on student ID check
  * @param {string} email - User email
- * @param {string} className - Class name (default: "cse4")
+ * @param {string} className - Class name (optional, if not provided checks cse5 and cse6)
  * @returns {boolean} - True if student is allowed
  */
-export const validateStudentAccess = (email, className = "cse4") => {
+export const validateStudentAccess = (email, className = null) => {
   if (!email) return false;
 
   // Extract student ID from email
   const studentId = extractStudentId(email);
 
-  // Check if ID exists in the class
-  return isStudentAllowed(studentId, className);
+  // If className is provided, check that specific class
+  if (className) {
+    return isStudentAllowed(studentId, className);
+  }
+
+  // Otherwise, check if student is in cse5 OR cse6
+  return (
+    isStudentAllowed(studentId, "cse5") || isStudentAllowed(studentId, "cse6")
+  );
 };
