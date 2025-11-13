@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -121,7 +122,8 @@ func runGroqChat(prompt string, _ []string) (string, error) {
 	apiKey := apiKey1 + apikey2
 
 	url := "https://api.groq.com/openai/v1/chat/completions"
-	model := "llama-3.1-70b-versatile"
+	// Updated to use a currently supported model (llama-3.1-70b-versatile was decommissioned)
+	model := "llama-3.3-70b-versatile" // Alternative: "llama-3.1-8b-instant" or "mixtral-8x7b-32768"
 
 	// Prepare messages array
 	messages := []map[string]string{
@@ -215,16 +217,33 @@ func RunChat(prompt string, chatHistory []string) (string, error) {
 		return response, nil
 	}
 
-	// If Gemini fails, log the error and try Groq
-	fmt.Printf("Gemini API failed: %v. Attempting Groq fallback...\n", err)
+	// Check if Gemini failed due to rate limit (429)
+	// If it's a rate limit error, we should still try Groq as fallback
+	// At this point, err is guaranteed to be non-nil (we returned early if it was nil)
+	isRateLimit := false
+	errStr := err.Error()
+	if strings.Contains(errStr, "429") || strings.Contains(errStr, "rate limit") || strings.Contains(errStr, "RESOURCE_EXHAUSTED") {
+		isRateLimit = true
+		fmt.Printf("Gemini API rate limit exceeded (429). Attempting Groq fallback...\n")
+	} else {
+		fmt.Printf("Gemini API failed: %v. Attempting Groq fallback...\n", err)
+	}
 	
+	// Try Groq as fallback
 	groqResponse, groqErr := runGroqChat(prompt, chatHistory)
 	if groqErr == nil {
-		fmt.Println("Successfully used Groq API as fallback")
+		if isRateLimit {
+			fmt.Println("Successfully used Groq API as fallback (Gemini rate limited)")
+		} else {
+			fmt.Println("Successfully used Groq API as fallback")
+		}
 		return groqResponse, nil
 	}
 
-	// Both APIs failed
+	// Both APIs failed - provide more helpful error message
+	if isRateLimit {
+		return "", fmt.Errorf("gemini API rate limit exceeded and Groq API also failed. Groq error: %v. Please wait a moment and try again, or check your API keys", groqErr)
+	}
 	return "", fmt.Errorf("both Gemini and Groq APIs failed. Gemini error: %v, Groq error: %v", err, groqErr)
 }
 
@@ -237,7 +256,12 @@ func GetChatResponse(c *gin.Context) {
 
 	responseText, err := RunChat(request.Prompt, request.ChatHistory)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		// Log the actual error for debugging
+		fmt.Printf("AI Error: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Internal Server Error",
+			"details": err.Error(), // Include error details for debugging
+		})
 		return
 	}
 

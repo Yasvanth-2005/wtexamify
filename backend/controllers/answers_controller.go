@@ -214,6 +214,12 @@ func SubmitAnswerSheet(c *gin.Context) {
 		return
 	}
 
+	// Log AI evaluation data for debugging
+	fmt.Printf("Submitting answer sheet - AI Score: %v, AI Evaluations count: %d\n", request.AIScore, len(request.AIEvaluations))
+	if len(request.AIEvaluations) > 0 {
+		fmt.Printf("First AI Evaluation: %+v\n", request.AIEvaluations[0])
+	}
+
 	// Update answer sheet with submitted answers
 	update := bson.M{
 		"$set": bson.M{
@@ -226,8 +232,16 @@ func SubmitAnswerSheet(c *gin.Context) {
 
 	_, err = answerSheetCollection.UpdateOne(context.TODO(), bson.M{"_id": answerSheetID}, update)
 	if err != nil {
+		fmt.Printf("Error updating answer sheet: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to submit answer sheet"})
 		return
+	}
+
+	// Verify the update by reading back the answer sheet
+	var updatedSheet models.AnswerSheet
+	err = answerSheetCollection.FindOne(context.TODO(), bson.M{"_id": answerSheetID}).Decode(&updatedSheet)
+	if err == nil {
+		fmt.Printf("Updated answer sheet - AI Score: %v, AI Evaluations count: %d\n", updatedSheet.AIScore, len(updatedSheet.AIEvaluations))
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Answer sheet submitted successfully"})
