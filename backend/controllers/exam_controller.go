@@ -2,9 +2,13 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -309,16 +313,75 @@ func GetSetsByExamID(c *gin.Context) {
 }
 
 func SendEmails(c *gin.Context) {
-	// List of recipient emails
-	// emails := []string{"maheshkarri2109@gmain.com",@rguktn.ac.in ,"n210507"@rguktn.ac.in", "vasuch9959@rguktn.ac.in", "maheshkarri2222@gmail.com", "vasu.challapalli9@gmail.com"}
-	//cse 4 emails
-	// emails := []string{"n210013@rguktn.ac.in", "n210025@rguktn.ac.in", "n210030@rguktn.ac.in", "n210037@rguktn.ac.in", "n210041@rguktn.ac.in", "n210043@rguktn.ac.in", "n210048@rguktn.ac.in", "n210100@rguktn.ac.in", "n210109@rguktn.ac.in", "n210118@rguktn.ac.in", "n210133@rguktn.ac.in", "n210136@rguktn.ac.in", "n210166@rguktn.ac.in", "n210172@rguktn.ac.in", "n210176@rguktn.ac.in", "n210187@rguktn.ac.in", "n210209@rguktn.ac.in", "n210226@rguktn.ac.in", "n210234@rguktn.ac.in", "n210368@rguktn.ac.in", "n210407@rguktn.ac.in", "n210419@rguktn.ac.in", "n210422@rguktn.ac.in", "n210432@rguktn.ac.in", "n210438@rguktn.ac.in", "n210450@rguktn.ac.in", "n210499@rguktn.ac.in", "n210529@rguktn.ac.in", "n210540@rguktn.ac.in", "n210553@rguktn.ac.in", "n210580@rguktn.ac.in", "n210597@rguktn.ac.in", "n210610@rguktn.ac.in", "n210660@rguktn.ac.in", "n210696@rguktn.ac.in", "n210701@rguktn.ac.in", "n210710@rguktn.ac.in", "n210714@rguktn.ac.in", "n210721@rguktn.ac.in", "n210764@rguktn.ac.in", "n210765@rguktn.ac.in", "n210770@rguktn.ac.in", "n210782@rguktn.ac.in", "n210789@rguktn.ac.in", "n210799@rguktn.ac.in", "n210809@rguktn.ac.in", "n210843@rguktn.ac.in", "n210860@rguktn.ac.in", "n210872@rguktn.ac.in", "n210899@rguktn.ac.in", "n210904@rguktn.ac.in", "n210929@rguktn.ac.in", "n210937@rguktn.ac.in", "n210956@rguktn.ac.in", "n211000@rguktn.ac.in", "n211010@rguktn.ac.in", "n211016@rguktn.ac.in", "n211031@rguktn.ac.in", "n211053@rguktn.ac.in", "n211087@rguktn.ac.in", "n210937@rguktn.ac.in", "n210956@rguktn.ac.in", "n211000@rguktn.ac.in", "n211010@rguktn.ac.in", "n211016@rguktn.ac.in", "n211031@rguktn.ac.in", "n211053@rguktn.ac.in", "n211087@rguktn.ac.in"}
+	// Get class from request body
+	var request struct {
+		Class string `json:"class"`
+	}
 
-	//cse5
-	// Email Configuration
+	if err := c.ShouldBindJSON(&request); err != nil || request.Class == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Class is required"})
+		return
+	}
 
-	//cse6
-	emails := []string{"n201096@rguktn.ac.in", "n210038@rguktn.ac.in", "n210085@rguktn.ac.in", "n210088@rguktn.ac.in", "n210095@rguktn.ac.in", "n210102@rguktn.ac.in", "n210111@rguktn.ac.in", "n210125@rguktn.ac.in", "n210145@rguktn.ac.in", "n210162@rguktn.ac.in", "n210173@rguktn.ac.in", "n210188@rguktn.ac.in", "n210193@rguktn.ac.in", "n210212@rguktn.ac.in", "n210215@rguktn.ac.in", "n210235@rguktn.ac.in", "n210237@rguktn.ac.in", "n210258@rguktn.ac.in", "n210279@rguktn.ac.in", "n210296@rguktn.ac.in", "n210300@rguktn.ac.in", "n210312@rguktn.ac.in", "n210323@rguktn.ac.in", "n210333@rguktn.ac.in", "n210340@rguktn.ac.in", "n210390@rguktn.ac.in", "n210401@rguktn.ac.in", "n210416@rguktn.ac.in", "n210455@rguktn.ac.in", "n210471@rguktn.ac.in", "n210495@rguktn.ac.in", "n210507@rguktn.ac.in", "n210522@rguktn.ac.in", "n210565@rguktn.ac.in", "n210598@rguktn.ac.in", "n210599@rguktn.ac.in", "n210615@rguktn.ac.in", "n210621@rguktn.ac.in", "n210673@rguktn.ac.in", "n210699@rguktn.ac.in", "n210753@rguktn.ac.in", "n210759@rguktn.ac.in", "n210774@rguktn.ac.in", "n210778@rguktn.ac.in", "n210780@rguktn.ac.in", "n210797@rguktn.ac.in", "n210821@rguktn.ac.in", "n210835@rguktn.ac.in", "n210837@rguktn.ac.in", "n210845@rguktn.ac.in", "n210920@rguktn.ac.in", "n210921@rguktn.ac.in", "n210940@rguktn.ac.in", "n210942@rguktn.ac.in", "n210950@rguktn.ac.in", "n210972@rguktn.ac.in", "n210988@rguktn.ac.in", "n210999@rguktn.ac.in", "n211026@rguktn.ac.in", "n210888@rguktn.ac.in"}
+	// Read students_data.json
+	// Try multiple possible paths
+	possiblePaths := []string{
+		"controllers/students_data.json",
+		"backend/controllers/students_data.json",
+		"./controllers/students_data.json",
+		"./backend/controllers/students_data.json",
+		filepath.Join("controllers", "students_data.json"),
+	}
+
+	var file *os.File
+	var err error
+	for _, path := range possiblePaths {
+		file, err = os.Open(path)
+		if err == nil {
+			break
+		}
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to read students data: %v", err)})
+		return
+	}
+	defer file.Close()
+
+	fileContent, err := io.ReadAll(file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to read students data: %v", err)})
+		return
+	}
+
+	var studentsData map[string][]struct {
+		Name     string `json:"name"`
+		IDNumber string `json:"idNumber"`
+	}
+
+	if err := json.Unmarshal(fileContent, &studentsData); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to parse students data: %v", err)})
+		return
+	}
+
+	// Get the class data
+	classData, exists := studentsData[request.Class]
+	if !exists {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Class %s not found", request.Class)})
+		return
+	}
+
+	// Generate emails from idNumbers (skip first entry as it's admin)
+	emails := []string{}
+	for i := 1; i < len(classData); i++ {
+		idNumber := strings.ToLower(classData[i].IDNumber)
+		email := idNumber + "@rguktn.ac.in"
+		emails = append(emails, email)
+	}
+
+	if len(emails) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No students found in the selected class"})
+		return
+	}
 	smtpHost := "smtp.gmail.com" // Use your email provider's SMTP
 	smtpPort := 587
 	senderEmail := "maheshkarri2222@gmail.com" // Replace with your email
@@ -343,6 +406,10 @@ func SendEmails(c *gin.Context) {
 	// SMTP Dialer
 	dialer := gomail.NewDialer(smtpHost, smtpPort, senderEmail, senderPassword)
 
+	// Track successful and failed emails
+	successCount := 0
+	failedEmails := []string{}
+
 	// Loop through each email and send the message
 	for _, email := range emails {
 		message := gomail.NewMessage()
@@ -351,13 +418,39 @@ func SendEmails(c *gin.Context) {
 		message.SetHeader("Subject", subject)
 		message.SetBody("text/html", fmt.Sprintf(bodyTemplate, link))
 
-		// Send Email
+		// Send Email - continue even if one fails
 		if err := dialer.DialAndSend(message); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to send email to %s", email)})
-			return
+			// Log the error but continue with other emails
+			fmt.Printf("Failed to send email to %s: %v\n", email, err)
+			failedEmails = append(failedEmails, email)
+		} else {
+			successCount++
 		}
 	}
 
-	// Success response
-	c.JSON(http.StatusOK, gin.H{"message": "Emails sent successfully"})
+	// Return summary of results
+	if len(failedEmails) == 0 {
+		// All emails sent successfully
+		c.JSON(http.StatusOK, gin.H{
+			"message":      fmt.Sprintf("Emails sent successfully to %d student(s)", successCount),
+			"successCount": successCount,
+			"failedCount":  0,
+		})
+	} else if successCount > 0 {
+		// Some succeeded, some failed
+		c.JSON(http.StatusPartialContent, gin.H{
+			"message":      fmt.Sprintf("Sent %d email(s) successfully, %d failed", successCount, len(failedEmails)),
+			"successCount": successCount,
+			"failedCount":  len(failedEmails),
+			"failedEmails": failedEmails,
+		})
+	} else {
+		// All emails failed
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":        "Failed to send all emails",
+			"successCount": 0,
+			"failedCount":  len(failedEmails),
+			"failedEmails": failedEmails,
+		})
+	}
 }
