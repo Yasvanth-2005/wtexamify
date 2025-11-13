@@ -183,9 +183,10 @@ func SubmitAnswerSheet(c *gin.Context) {
 
 	// Get request data
 	var request struct {
-		AnswerSheetID string              `json:"answer_sheet_id"`
-		Answers       []map[string]string `json:"answers"`
-		AIScore       float64             `json:"ai_score,omitempty"`
+		AnswerSheetID string                `json:"answer_sheet_id"`
+		Answers       []map[string]string   `json:"answers"`
+		AIScore       float64               `json:"ai_score,omitempty"`
+		AIEvaluations []models.AIEvaluation `json:"ai_evaluations,omitempty"`
 	}
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
@@ -216,9 +217,10 @@ func SubmitAnswerSheet(c *gin.Context) {
 	// Update answer sheet with submitted answers
 	update := bson.M{
 		"$set": bson.M{
-			"data":          request.Answers,
-			"ai_score":      request.AIScore,
-			"submit_status": true, // Mark as submitted
+			"data":            request.Answers,
+			"ai_score":        request.AIScore,
+			"ai_evaluations":  request.AIEvaluations,
+			"submit_status":   true, 
 		},
 	}
 

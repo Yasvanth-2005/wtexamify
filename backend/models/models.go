@@ -52,6 +52,13 @@ type Exam struct {
 	UpdatedAt    primitive.DateTime   `bson:"updated_at,omitempty" json:"updated_at"`
 }
 
+type AIEvaluation struct {
+	QuestionNumber int    `bson:"question_number" json:"question_number"`
+	Status         string `bson:"status" json:"status"`
+	Explanation    string `bson:"explanation" json:"explanation"`
+	Overview       string `bson:"overview" json:"overview"`
+}
+
 type AnswerSheet struct {
 	ID           primitive.ObjectID  `bson:"_id,omitempty" json:"id"`
 	ExamID       primitive.ObjectID  `bson:"exam_id" json:"exam_id"`
@@ -62,6 +69,7 @@ type AnswerSheet struct {
 	StudentEmail string              `bson:"student_email" json:"student_email"`
 	Data         []map[string]string `bson:"data" json:"data"`
 	AIScore      float64             `bson:"ai_score,omitempty" json:"ai_score,omitempty"`
+	AIEvaluations []AIEvaluation     `bson:"ai_evaluations,omitempty" json:"ai_evaluations,omitempty"` // Detailed AI evaluation for each question
 	Copied       bool                `bson:"copied" json:"copied"`
 	CopyCount    int                 `bson:"copy_count" json:"copy_count"`
 	SubmitStatus bool                `bson:"submit_status" json:"submit_status"`
