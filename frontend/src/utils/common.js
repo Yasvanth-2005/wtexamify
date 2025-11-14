@@ -4,7 +4,7 @@ const backends = [
   "https://wtexamifybackend2.onrender.com",
   "https://wtexamifybackend2.onrender.com",
 ];
-
+//
 const getRandomBackend = () =>
   backends[Math.floor(Math.random() * backends.length)];
 
