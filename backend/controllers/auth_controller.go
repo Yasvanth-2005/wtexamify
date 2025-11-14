@@ -117,8 +117,7 @@ func GoogleCallback(c *gin.Context) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied. Your email is not authorized to use this system."})
 			return
 		}
-		// RGUKT email - will be validated on frontend against student list
-		// Backend allows it through, but frontend will check if student ID is in cse5 or cse6 list
+		// RGUKT email - allowed (frontend validates domain only)
 	}
 
 	// Determine role
