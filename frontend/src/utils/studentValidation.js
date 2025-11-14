@@ -27,24 +27,14 @@ export const isStudentAllowed = (studentId, className = "cse4") => {
 };
 
 /**
- * Validates if a user email is allowed based on student ID check
+ * Validates if a user email is allowed based on email domain
  * @param {string} email - User email
- * @param {string} className - Class name (optional, if not provided checks cse5 and cse6)
- * @returns {boolean} - True if student is allowed
+ * @param {string} className - Class name (optional, kept for backward compatibility but not used)
+ * @returns {boolean} - True if email is from @rguktn.ac.in domain
  */
 export const validateStudentAccess = (email, className = null) => {
   if (!email) return false;
 
-  // Extract student ID from email
-  const studentId = extractStudentId(email);
-
-  // If className is provided, check that specific class
-  if (className) {
-    return isStudentAllowed(studentId, className);
-  }
-
-  // Otherwise, check if student is in cse5 OR cse6
-  return (
-    isStudentAllowed(studentId, "cse5") || isStudentAllowed(studentId, "cse6")
-  );
+  // Allow any email from @rguktn.ac.in domain
+  return email.toLowerCase().endsWith("@rguktn.ac.in");
 };
