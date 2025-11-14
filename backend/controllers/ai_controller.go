@@ -120,8 +120,8 @@ func runGeminiChat(prompt string, chatHistory []string) (string, error) {
 }
 
 func runGroqChat(prompt string, _ []string) (string, error) {
-	apiKey1 := "gsk_GKnaTCZkot0VnmVaI53LWGdyb3FYfS5IlXtHrheOfF2wxAOS"
-	apikey2 := "NkCc"
+	apiKey1 := "gsk_nRGekWI6o3xeEYDhgkxBWGdyb3FYK9jNFaxZOwX7LpQYkdDuuz7"
+	apikey2 := "t"
 	apiKey := apiKey1 + apikey2
 
 	url := "https://api.groq.com/openai/v1/chat/completions"
