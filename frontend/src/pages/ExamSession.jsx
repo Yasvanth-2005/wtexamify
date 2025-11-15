@@ -152,7 +152,7 @@ const ExamSession = () => {
       let prompt = "";
       let tableData = null;
 
-      if (examType === "external") {
+      if (examType === "external" || examType === "internal") {
         // Database schema tables data for external exams
         tableData = {
           KINGS: [
@@ -162,7 +162,6 @@ const ExamSession = () => {
               dynasty: "Maurya",
               reign_period: "268–232 BCE",
               kingdom_region: "Northern India",
-              capital_city: "Pataliputra",
             },
             {
               king_id: 2,
@@ -170,7 +169,6 @@ const ExamSession = () => {
               dynasty: "Chola",
               reign_period: "1012–1044 CE",
               kingdom_region: "South India",
-              capital_city: "Gangaikonda Cholapuram",
             },
             {
               king_id: 3,
@@ -178,7 +176,6 @@ const ExamSession = () => {
               dynasty: "Gupta",
               reign_period: "335–375 CE",
               kingdom_region: "Central India",
-              capital_city: "Pataliputra",
             },
             {
               king_id: 4,
@@ -186,184 +183,212 @@ const ExamSession = () => {
               dynasty: "Vijayanagara",
               reign_period: "1509–1529 CE",
               kingdom_region: "Deccan Region",
-              capital_city: "Hampi",
-            },
-            {
-              king_id: 5,
-              king_name: "Chandragupta II",
-              dynasty: "Gupta",
-              reign_period: "380–415 CE",
-              kingdom_region: "Northern India",
-              capital_city: "Ujjain",
             },
           ],
-          AI_TOOLS: [
+          ARTISTS: [
             {
-              tool_id: 101,
-              tool_name: "ChatGPT",
-              category: "LLM",
-              provider: "OpenAI",
-              price_per_license: 12000,
-              release_year: 2022,
+              artist_id: 11,
+              artist_name: "Chitrakar Vishnu",
+              style: "Miniature, Folk",
+              birth_century: "17th century",
+              hometown: "Varanasi",
             },
             {
-              tool_id: 102,
-              tool_name: "Gemini",
-              category: "LLM",
-              provider: "Google DeepMind",
-              price_per_license: 11000,
-              release_year: 2024,
+              artist_id: 12,
+              artist_name: "Meera Devi",
+              style: "Pattachitra",
+              birth_century: "18th century",
+              hometown: "Puri",
             },
             {
-              tool_id: 103,
-              tool_name: "Claude",
-              category: "LLM",
-              provider: "Anthropic",
-              price_per_license: 10000,
-              release_year: 2023,
+              artist_id: 13,
+              artist_name: "Ranganatha Rao",
+              style: "Tanjore",
+              birth_century: "16th century",
+              hometown: "Thanjavur",
             },
             {
-              tool_id: 104,
-              tool_name: "Copilot",
-              category: "Code Assistant",
-              provider: "Microsoft",
-              price_per_license: 8000,
-              release_year: 2021,
-            },
-            {
-              tool_id: 105,
-              tool_name: "Midjourney",
-              category: "Image Gen AI",
-              provider: "Midjourney Inc.",
-              price_per_license: 7000,
-              release_year: 2022,
-            },
-            {
-              tool_id: 106,
-              tool_name: "DALL·E 3",
-              category: "Image Gen AI",
-              provider: "OpenAI",
-              price_per_license: 7500,
-              release_year: 2023,
+              artist_id: 14,
+              artist_name: "Agnivesh",
+              style: "Mughal-influenced",
+              birth_century: "18th century",
+              hometown: "Lucknow",
             },
           ],
-          VENDORS: [
+          PAINTINGS: [
             {
-              vendor_id: 201,
-              vendor_name: "OpenAI Technologies",
-              hq_region: "San Francisco, USA",
-              rating: 4.9,
-              contact_email: "support@openai.com",
-              active_status: "Active",
+              painting_id: 101,
+              title: "Lotus Hymn",
+              artist_id: 11,
+              medium: "Tempera on cloth",
+              year_created: 1705,
+              price_in_inr: 12000,
             },
             {
-              vendor_id: 202,
-              vendor_name: "Google DeepMind",
-              hq_region: "London, UK",
-              rating: 4.8,
-              contact_email: "info@deepmind.com",
-              active_status: "Active",
+              painting_id: 102,
+              title: "Coronation of the King",
+              artist_id: 13,
+              medium: "Gilded panel",
+              year_created: 1512,
+              price_in_inr: 22000,
             },
             {
-              vendor_id: 203,
-              vendor_name: "Anthropic AI",
-              hq_region: "San Francisco, USA",
-              rating: 4.7,
-              contact_email: "contact@anthropic.com",
-              active_status: "Active",
+              painting_id: 103,
+              title: "Krishna & the Peacock",
+              artist_id: 12,
+              medium: "Natural pigment on cloth",
+              year_created: 1790,
+              price_in_inr: 9000,
             },
             {
-              vendor_id: 204,
-              vendor_name: "Microsoft Corporation",
-              hq_region: "Redmond, USA",
-              rating: 4.6,
-              contact_email: "ai-support@microsoft.com",
-              active_status: "Active",
-            },
-            {
-              vendor_id: 205,
-              vendor_name: "Midjourney Labs",
-              hq_region: "Los Angeles, USA",
-              rating: 4.5,
-              contact_email: "hello@midjourney.com",
-              active_status: "Active",
+              painting_id: 104,
+              title: "Courtly Procession",
+              artist_id: 14,
+              medium: "Ink & wash",
+              year_created: 1750,
+              price_in_inr: 15000,
             },
           ],
-          PURCHASES: [
+          ORDERS: [
             {
-              purchase_id: 5001,
+              order_id: 5001,
               king_id: 1,
-              tool_id: 101,
-              vendor_id: 201,
-              purchase_date: "2025-01-15",
-              total_cost: 24000,
+              painting_id: 101,
+              order_date: "2025-01-15",
+              price_paid: 24000,
+              status: "COMPLETED",
             },
             {
-              purchase_id: 5002,
+              order_id: 5002,
               king_id: 2,
-              tool_id: 104,
-              vendor_id: 204,
-              purchase_date: "2025-02-20",
-              total_cost: 16000,
+              painting_id: 102,
+              order_date: "2025-02-20",
+              price_paid: 22000,
+              status: "COMPLETED",
             },
             {
-              purchase_id: 5003,
+              order_id: 5003,
               king_id: 3,
-              tool_id: 102,
-              vendor_id: 202,
-              purchase_date: "2025-03-05",
-              total_cost: 22000,
+              painting_id: 103,
+              order_date: "2025-03-05",
+              price_paid: 9000,
+              status: "PENDING",
             },
             {
-              purchase_id: 5004,
+              order_id: 5004,
               king_id: 4,
-              tool_id: 105,
-              vendor_id: 205,
-              purchase_date: "2025-04-10",
-              total_cost: 14000,
-            },
-            {
-              purchase_id: 5005,
-              king_id: 5,
-              tool_id: 103,
-              vendor_id: 203,
-              purchase_date: "2025-05-25",
-              total_cost: 20000,
-            },
-            {
-              purchase_id: 5006,
-              king_id: 1,
-              tool_id: 106,
-              vendor_id: 201,
-              purchase_date: "2025-07-02",
-              total_cost: 15000,
+              painting_id: 104,
+              order_date: "2025-04-10",
+              price_paid: 15000,
+              status: "COMPLETED",
             },
           ],
         };
 
-        prompt = `You are evaluating SQL/external exam answers. Use the following database schema tables as reference:
+        const sqlSchema = `-- Create Database
+CREATE DATABASE royalAICart_DB;
+USE royalAICart_DB;
 
-KINGS Table:
+------------------------------------------------------------
+-- TABLE 1: KINGS
+------------------------------------------------------------
+CREATE TABLE kings (
+    king_id INT PRIMARY KEY,
+    king_name VARCHAR(100),
+    dynasty VARCHAR(100),
+    reign_period VARCHAR(50),
+    kingdom_region VARCHAR(100)
+);
+
+INSERT INTO kings (king_id, king_name, dynasty, reign_period, kingdom_region) VALUES
+(1, 'Ashoka Maurya', 'Maurya', '268–232 BCE', 'Northern India'),
+(2, 'Rajendra Chola I', 'Chola', '1012–1044 CE', 'South India'),
+(3, 'Samudragupta', 'Gupta', '335–375 CE', 'Central India'),
+(4, 'Krishnadevaraya', 'Vijayanagara', '1509–1529 CE', 'Deccan Region');
+
+------------------------------------------------------------
+-- TABLE 2: ARTISTS
+------------------------------------------------------------
+CREATE TABLE artists (
+    artist_id INT PRIMARY KEY,
+    artist_name VARCHAR(100),
+    style VARCHAR(100),
+    birth_century VARCHAR(50),
+    hometown VARCHAR(100)
+);
+
+INSERT INTO artists (artist_id, artist_name, style, birth_century, hometown) VALUES
+(11, 'Chitrakar Vishnu', 'Miniature, Folk', '17th century', 'Varanasi'),
+(12, 'Meera Devi', 'Pattachitra', '18th century', 'Puri'),
+(13, 'Ranganatha Rao', 'Tanjore', '16th century', 'Thanjavur'),
+(14, 'Agnivesh', 'Mughal-influenced', '18th century', 'Lucknow');
+
+------------------------------------------------------------
+-- TABLE 3: PAINTINGS
+------------------------------------------------------------
+CREATE TABLE paintings (
+    painting_id INT PRIMARY KEY,
+    title VARCHAR(150),
+    artist_id INT,
+    medium VARCHAR(100),
+    year_created INT,
+    price_in_inr INT,
+    FOREIGN KEY (artist_id) REFERENCES artists(artist_id)
+);
+
+INSERT INTO paintings (painting_id, title, artist_id, medium, year_created, price_in_inr) VALUES
+(101, 'Lotus Hymn', 11, 'Tempera on cloth', 1705, 12000),
+(102, 'Coronation of the King', 13, 'Gilded panel', 1512, 22000),
+(103, 'Krishna & the Peacock', 12, 'Natural pigment on cloth', 1790, 9000),
+(104, 'Courtly Procession', 14, 'Ink & wash', 1750, 15000);
+
+------------------------------------------------------------
+-- TABLE 4: ORDERS
+------------------------------------------------------------
+CREATE TABLE orders (
+    order_id INT PRIMARY KEY,
+    king_id INT,
+    painting_id INT,
+    order_date DATE,
+    price_paid INT,
+    status VARCHAR(20),
+    FOREIGN KEY (king_id) REFERENCES kings(king_id),
+    FOREIGN KEY (painting_id) REFERENCES paintings(painting_id)
+);
+
+INSERT INTO orders (order_id, king_id, painting_id, order_date, price_paid, status) VALUES
+(5001, 1, 101, '2025-01-15', 24000, 'COMPLETED'),
+(5002, 2, 102, '2025-02-20', 22000, 'COMPLETED'),
+(5003, 3, 103, '2025-03-05', 9000, 'PENDING'),
+(5004, 4, 104, '2025-04-10', 15000, 'COMPLETED');`;
+
+        prompt = `You are evaluating SQL/external exam answers. Use the following database schema and table data as reference:
+
+${sqlSchema}
+
+KINGS Table Data:
 ${JSON.stringify(tableData.KINGS, null, 2)}
 
-AI_TOOLS Table:
-${JSON.stringify(tableData.AI_TOOLS, null, 2)}
+ARTISTS Table Data:
+${JSON.stringify(tableData.ARTISTS, null, 2)}
 
-VENDORS Table:
-${JSON.stringify(tableData.VENDORS, null, 2)}
+PAINTINGS Table Data:
+${JSON.stringify(tableData.PAINTINGS, null, 2)}
 
-PURCHASES Table:
-${JSON.stringify(tableData.PURCHASES, null, 2)}
+ORDERS Table Data:
+${JSON.stringify(tableData.ORDERS, null, 2)}
 
 Evaluate ALL the following questions and answers. For EACH question, provide your evaluation in this EXACT format:
 
 QUESTION 1:
 STATUS: [will execute OR will not execute]
+SCORE: [number out of 33.3 - assign a score from 0 to 33.3 based on how close the answer is to being correct. If it will execute perfectly, give 33.3. If it will not execute, give 0. For partial correctness, assign a score between 0 and 33.3 based on how close it is]
 OVERVIEW: [Brief 1-2 sentence overview]
 EXPLANATION: [Detailed explanation]
 
 QUESTION 2:
 STATUS: [will execute OR will not execute]
+SCORE: [number out of 33.3 - assign a score from 0 to 33.3 based on how close the answer is to being correct]
 OVERVIEW: [Brief 1-2 sentence overview]
 EXPLANATION: [Detailed explanation]
 
@@ -376,12 +401,12 @@ ${questionsList
   )
   .join("\n\n")}
 
-Provide your response in the exact format above for ALL questions.`;
+Provide your response in the exact format above for ALL questions. Each question is worth 33.3 marks.`;
       } else if (examType === "viva" || examType === "coaviva") {
         prompt = `You are evaluating viva exam answers. Evaluate ALL the following questions and answers. For EACH question, determine if the answer is:
-- "correct" (fully correct and complete)
-- "partial" (partially correct or incomplete)
-- "incorrect" (wrong or irrelevant)
+- "correct" (fully correct and complete) - worth 2 points
+- "partial" (partially correct or incomplete) - worth 1 point
+- "incorrect" (wrong or irrelevant) - worth 0 points
 
 Provide your evaluation in this EXACT format:
 
@@ -397,10 +422,6 @@ EXPLANATION: [Detailed explanation]
 
 (Continue for all questions)
 
-At the end, provide:
-TOTAL_SCORE: [number out of 20]
-(Scoring: correct = 2 points, partial = 1 point, incorrect = 0 points)
-
 Questions and Answers:
 ${questionsList
   .map(
@@ -408,7 +429,7 @@ ${questionsList
   )
   .join("\n\n")}
 
-Provide your response in the exact format above for ALL questions, followed by TOTAL_SCORE.`;
+Provide your response in the exact format above for ALL questions. Scoring: correct = 2 points, partial = 1 point, incorrect = 0 points. Total score will be calculated automatically.`;
       } else {
         // Fallback for other exam types
         prompt = `Evaluate the following questions and answers. For EACH question, provide your evaluation in this EXACT format:
@@ -460,6 +481,7 @@ ${questionsList
             examType === "viva" || examType === "coaviva"
               ? "incorrect"
               : "will not execute";
+          let score = null;
           let overview = "";
           let explanation = "";
 
@@ -474,9 +496,20 @@ ${questionsList
               status = statusMatch[1].toLowerCase();
             }
 
+            // Extract SCORE (for external/internal exams)
+            if (examType === "external" || examType === "internal") {
+              const scoreMatch = questionSection.match(/SCORE:\s*([\d.]+)/i);
+              if (scoreMatch) {
+                score = parseFloat(scoreMatch[1]);
+                // Ensure score is between 0 and 33.3
+                if (score > 33.3) score = 33.3;
+                if (score < 0) score = 0;
+              }
+            }
+
             // Extract OVERVIEW
             const overviewMatch = questionSection.match(
-              /OVERVIEW:\s*([^\n]+(?:\n(?!EXPLANATION:)[^\n]+)*)/i
+              /OVERVIEW:\s*([^\n]+(?:\n(?!EXPLANATION:|SCORE:)[^\n]+)*)/i
             );
             if (overviewMatch) {
               overview = overviewMatch[1].trim();
@@ -494,6 +527,7 @@ ${questionsList
           statuses.push({
             questionNumber: questionNum,
             status: status,
+            score: score,
             overview: overview || "No overview provided",
             explanation: explanation || "No explanation provided",
           });
@@ -501,28 +535,37 @@ ${questionsList
 
         // Calculate score
         if (examType === "viva" || examType === "coaviva") {
-          // Extract TOTAL_SCORE from response
-          const scoreMatch = fullResponse.match(/TOTAL_SCORE:\s*(\d+)/i);
-          if (scoreMatch) {
-            finalAiScore = parseInt(scoreMatch[1], 10);
-            // Ensure score is between 0 and 20
-            if (finalAiScore > 20) finalAiScore = 20;
-            if (finalAiScore < 0) finalAiScore = 0;
-          } else {
-            // Calculate from statuses if TOTAL_SCORE not found
-            finalAiScore = statuses.reduce((sum, evaluation) => {
-              if (evaluation.status === "correct") return sum + 2;
-              if (evaluation.status === "partial") return sum + 1;
-              return sum;
-            }, 0);
-          }
+          // Calculate from statuses: correct = 2, partial = 1, incorrect = 0
+          finalAiScore = statuses.reduce((sum, evaluation) => {
+            if (evaluation.status === "correct") return sum + 2;
+            if (evaluation.status === "partial") return sum + 1;
+            return sum;
+          }, 0);
+          // Ensure score is between 0 and 20
+          if (finalAiScore > 20) finalAiScore = 20;
+          if (finalAiScore < 0) finalAiScore = 0;
+        } else if (examType === "external" || examType === "internal") {
+          // For external/internal exams, sum individual scores (each out of 33.3)
+          finalAiScore = statuses.reduce((sum, evaluation) => {
+            if (evaluation.score !== null && evaluation.score !== undefined) {
+              return sum + evaluation.score;
+            }
+            // Fallback: if score not provided, use status
+            if (evaluation.status === "will execute") {
+              return sum + 33.3;
+            }
+            return sum;
+          }, 0);
+          // Round to 2 decimal places and ensure between 0 and 100
+          finalAiScore = Math.round(finalAiScore * 100) / 100;
+          if (finalAiScore > 100) finalAiScore = 100;
+          if (finalAiScore < 0) finalAiScore = 0;
         } else {
-          // For external exams, calculate score based on "will execute" status
+          // Fallback for other exam types
           const executeCount = statuses.filter(
             (s) => s.status === "will execute"
           ).length;
           finalAiScore = Math.round((executeCount / statuses.length) * 100);
-          // Ensure score is between 0 and 100
           if (finalAiScore > 100) finalAiScore = 100;
           if (finalAiScore < 0) finalAiScore = 0;
         }
@@ -1196,9 +1239,6 @@ ${questionsList
                           <th className="border border-gray-600 px-3 py-2 text-left text-white">
                             kingdom_region
                           </th>
-                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
-                            capital_city
-                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1218,9 +1258,6 @@ ${questionsList
                           <td className="border border-gray-600 px-3 py-2">
                             Northern India
                           </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            Pataliputra
-                          </td>
                         </tr>
                         <tr className="text-gray-300 bg-gray-800/50">
                           <td className="border border-gray-600 px-3 py-2">
@@ -1237,9 +1274,6 @@ ${questionsList
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
                             South India
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            Gangaikonda Cholapuram
                           </td>
                         </tr>
                         <tr className="text-gray-300">
@@ -1258,9 +1292,6 @@ ${questionsList
                           <td className="border border-gray-600 px-3 py-2">
                             Central India
                           </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            Pataliputra
-                          </td>
                         </tr>
                         <tr className="text-gray-300 bg-gray-800/50">
                           <td className="border border-gray-600 px-3 py-2">
@@ -1278,28 +1309,105 @@ ${questionsList
                           <td className="border border-gray-600 px-3 py-2">
                             Deccan Region
                           </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* ARTISTS Table */}
+                <div className="bg-gray-700 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-blue-400 mb-4">
+                    Table Name :- ARTISTS
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-gray-600 text-sm">
+                      <thead>
+                        <tr className="bg-gray-800">
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            artist_id
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            artist_name
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            style
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            birth_century
+                          </th>
+                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
+                            hometown
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="text-gray-300">
                           <td className="border border-gray-600 px-3 py-2">
-                            Hampi
+                            11
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Chitrakar Vishnu
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Miniature, Folk
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            17th century
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Varanasi
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300 bg-gray-800/50">
+                          <td className="border border-gray-600 px-3 py-2">
+                            12
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Meera Devi
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Pattachitra
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            18th century
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Puri
                           </td>
                         </tr>
                         <tr className="text-gray-300">
                           <td className="border border-gray-600 px-3 py-2">
-                            5
+                            13
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            Chandragupta II
+                            Ranganatha Rao
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            Gupta
+                            Tanjore
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            380–415 CE
+                            16th century
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            Northern India
+                            Thanjavur
+                          </td>
+                        </tr>
+                        <tr className="text-gray-300 bg-gray-800/50">
+                          <td className="border border-gray-600 px-3 py-2">
+                            14
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            Ujjain
+                            Agnivesh
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Mughal-influenced
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            18th century
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            Lucknow
                           </td>
                         </tr>
                       </tbody>
@@ -1307,32 +1415,32 @@ ${questionsList
                   </div>
                 </div>
 
-                {/* AI_TOOLS Table */}
+                {/* PAINTINGS Table */}
                 <div className="bg-gray-700 p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-blue-400 mb-4">
-                    Table Name :- AI_TOOLS
+                    Table Name :- PAINTINGS
                   </h3>
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse border border-gray-600 text-sm">
                       <thead>
                         <tr className="bg-gray-800">
                           <th className="border border-gray-600 px-3 py-2 text-left text-white">
-                            tool_id
+                            painting_id
                           </th>
                           <th className="border border-gray-600 px-3 py-2 text-left text-white">
-                            tool_name
+                            title
                           </th>
                           <th className="border border-gray-600 px-3 py-2 text-left text-white">
-                            category
+                            artist_id
                           </th>
                           <th className="border border-gray-600 px-3 py-2 text-left text-white">
-                            provider
+                            medium
                           </th>
                           <th className="border border-gray-600 px-3 py-2 text-left text-white">
-                            price_per_license
+                            year_created
                           </th>
                           <th className="border border-gray-600 px-3 py-2 text-left text-white">
-                            release_year
+                            price_in_inr
                           </th>
                         </tr>
                       </thead>
@@ -1342,19 +1450,19 @@ ${questionsList
                             101
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            ChatGPT
+                            Lotus Hymn
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            LLM
+                            11
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            OpenAI
+                            Tempera on cloth
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            1705
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
                             12000
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            2022
                           </td>
                         </tr>
                         <tr className="text-gray-300 bg-gray-800/50">
@@ -1362,19 +1470,19 @@ ${questionsList
                             102
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            Gemini
+                            Coronation of the King
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            LLM
+                            13
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            Google DeepMind
+                            Gilded panel
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            11000
+                            1512
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            2024
+                            22000
                           </td>
                         </tr>
                         <tr className="text-gray-300">
@@ -1382,19 +1490,19 @@ ${questionsList
                             103
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            Claude
+                            Krishna & the Peacock
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            LLM
+                            12
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            Anthropic
+                            Natural pigment on cloth
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            10000
+                            1790
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            2023
+                            9000
                           </td>
                         </tr>
                         <tr className="text-gray-300 bg-gray-800/50">
@@ -1402,59 +1510,19 @@ ${questionsList
                             104
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            Copilot
+                            Courtly Procession
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            Code Assistant
+                            14
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            Microsoft
+                            Ink & wash
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            8000
+                            1750
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            2021
-                          </td>
-                        </tr>
-                        <tr className="text-gray-300">
-                          <td className="border border-gray-600 px-3 py-2">
-                            105
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            Midjourney
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            Image Gen AI
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            Midjourney Inc.
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            7000
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            2022
-                          </td>
-                        </tr>
-                        <tr className="text-gray-300 bg-gray-800/50">
-                          <td className="border border-gray-600 px-3 py-2">
-                            106
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            DALL·E 3
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            Image Gen AI
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            OpenAI
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            7500
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            2023
+                            15000
                           </td>
                         </tr>
                       </tbody>
@@ -1462,167 +1530,32 @@ ${questionsList
                   </div>
                 </div>
 
-                {/* VENDORS Table */}
+                {/* ORDERS Table */}
                 <div className="bg-gray-700 p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-blue-400 mb-4">
-                    Table Name :- VENDORS
+                    Table Name :- ORDERS
                   </h3>
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse border border-gray-600 text-sm">
                       <thead>
                         <tr className="bg-gray-800">
                           <th className="border border-gray-600 px-3 py-2 text-left text-white">
-                            vendor_id
-                          </th>
-                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
-                            vendor_name
-                          </th>
-                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
-                            hq_region
-                          </th>
-                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
-                            rating
-                          </th>
-                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
-                            contact_email
-                          </th>
-                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
-                            active_status
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr className="text-gray-300">
-                          <td className="border border-gray-600 px-3 py-2">
-                            201
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            OpenAI Technologies
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            San Francisco, USA
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            4.9
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            support@openai.com
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            Active
-                          </td>
-                        </tr>
-                        <tr className="text-gray-300 bg-gray-800/50">
-                          <td className="border border-gray-600 px-3 py-2">
-                            202
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            Google DeepMind
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            London, UK
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            4.8
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            info@deepmind.com
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            Active
-                          </td>
-                        </tr>
-                        <tr className="text-gray-300">
-                          <td className="border border-gray-600 px-3 py-2">
-                            203
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            Anthropic AI
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            San Francisco, USA
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            4.7
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            contact@anthropic.com
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            Active
-                          </td>
-                        </tr>
-                        <tr className="text-gray-300 bg-gray-800/50">
-                          <td className="border border-gray-600 px-3 py-2">
-                            204
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            Microsoft Corporation
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            Redmond, USA
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            4.6
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            ai-support@microsoft.com
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            Active
-                          </td>
-                        </tr>
-                        <tr className="text-gray-300">
-                          <td className="border border-gray-600 px-3 py-2">
-                            205
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            Midjourney Labs
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            Los Angeles, USA
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            4.5
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            hello@midjourney.com
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            Active
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* PURCHASES Table */}
-                <div className="bg-gray-700 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-blue-400 mb-4">
-                    Table Name :- PURCHASES
-                  </h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse border border-gray-600 text-sm">
-                      <thead>
-                        <tr className="bg-gray-800">
-                          <th className="border border-gray-600 px-3 py-2 text-left text-white">
-                            purchase_id
+                            order_id
                           </th>
                           <th className="border border-gray-600 px-3 py-2 text-left text-white">
                             king_id
                           </th>
                           <th className="border border-gray-600 px-3 py-2 text-left text-white">
-                            tool_id
+                            painting_id
                           </th>
                           <th className="border border-gray-600 px-3 py-2 text-left text-white">
-                            vendor_id
+                            order_date
                           </th>
                           <th className="border border-gray-600 px-3 py-2 text-left text-white">
-                            purchase_date
+                            price_paid
                           </th>
                           <th className="border border-gray-600 px-3 py-2 text-left text-white">
-                            total_cost
+                            status
                           </th>
                         </tr>
                       </thead>
@@ -1638,13 +1571,13 @@ ${questionsList
                             101
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            201
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
                             2025-01-15
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
                             24000
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            COMPLETED
                           </td>
                         </tr>
                         <tr className="text-gray-300 bg-gray-800/50">
@@ -1655,16 +1588,16 @@ ${questionsList
                             2
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            104
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            204
+                            102
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
                             2025-02-20
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            16000
+                            22000
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            COMPLETED
                           </td>
                         </tr>
                         <tr className="text-gray-300">
@@ -1675,16 +1608,16 @@ ${questionsList
                             3
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            102
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            202
+                            103
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
                             2025-03-05
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            22000
+                            9000
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            PENDING
                           </td>
                         </tr>
                         <tr className="text-gray-300 bg-gray-800/50">
@@ -1695,56 +1628,16 @@ ${questionsList
                             4
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            105
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            205
+                            104
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
                             2025-04-10
                           </td>
                           <td className="border border-gray-600 px-3 py-2">
-                            14000
-                          </td>
-                        </tr>
-                        <tr className="text-gray-300">
-                          <td className="border border-gray-600 px-3 py-2">
-                            5005
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            5
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            103
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            203
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            2025-05-25
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            20000
-                          </td>
-                        </tr>
-                        <tr className="text-gray-300 bg-gray-800/50">
-                          <td className="border border-gray-600 px-3 py-2">
-                            5006
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            1
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            106
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            201
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
-                            2025-07-02
-                          </td>
-                          <td className="border border-gray-600 px-3 py-2">
                             15000
+                          </td>
+                          <td className="border border-gray-600 px-3 py-2">
+                            COMPLETED
                           </td>
                         </tr>
                       </tbody>

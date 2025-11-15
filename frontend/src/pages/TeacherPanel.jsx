@@ -6,7 +6,6 @@ import {
   Clock,
   BookOpen,
   Download,
-  FileText,
   Loader,
   Mail,
   Printer,
@@ -26,7 +25,6 @@ const TeacherPanel = () => {
   const [loadingQuestionSets, setLoadingQuestionSets] = useState(false);
   const [downloadingSheets, setDownloadingSheets] = useState({});
   const [downloadingAll, setDownloadingAll] = useState(false);
-  const [downloadingScores, setDownloadingScores] = useState(false);
   const [sendingEmails, setSendingEmails] = useState({});
   const [loadingExamStatus, setLoadingExamStatus] = useState({});
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -43,32 +41,11 @@ const TeacherPanel = () => {
     setAvailableClasses(classes);
   }, []);
 
-  const downloadAiScores = () => {
-    try {
-      setDownloadingScores(true);
-
-      // Prepare data for Excel
-      // console.log("answer sheets: ",answerSheets)
-      const data = answerSheets.map((sheet) => ({
-        "Student Name": sheet.student_name,
-        "AI Score": sheet.ai_score,
-      }));
-
-      // Create workbook and worksheet
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(data);
-
-      // Add worksheet to workbook
-      XLSX.utils.book_append_sheet(wb, ws, "AI Scores");
-
-      // Generate Excel file
-      XLSX.writeFile(wb, "ai-scores.xlsx");
-    } catch (error) {
-      toast.error("Failed to download AI scores");
-      console.error("error is: ", error);
-    } finally {
-      setDownloadingScores(false);
-    }
+  // Extract ID number from email (first 7 characters before @)
+  const extractIdNumber = (email) => {
+    if (!email) return "";
+    const prefix = email.split("@")[0];
+    return prefix.substring(0, 7).toUpperCase();
   };
 
   const handleSendEmails = async (examId) => {
@@ -309,9 +286,87 @@ const TeacherPanel = () => {
       </div>
     `;
   };
-  const downloadAllPDFs = async () => {
+  // Generate PDF content for all answer sheets (ID Number, Question, Answer only)
+  const generateAllPDFContent = (allSheets) => {
+    return `
+      <html>
+        <head>
+          <title>All Answer Sheets</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              padding: 20px; 
+              font-size: 12px;
+            }
+            .answer-sheet-section {
+              margin-bottom: 30px;
+              page-break-after: always;
+            }
+            .id-number {
+              font-size: 16px;
+              font-weight: bold;
+              margin-bottom: 15px;
+              color: #2196F3;
+              border-bottom: 2px solid #2196F3;
+              padding-bottom: 5px;
+            }
+            .question-answer {
+              margin-bottom: 20px;
+              padding: 10px;
+              border-left: 3px solid #4CAF50;
+              background-color: #f9f9f9;
+            }
+            .question {
+              font-weight: bold;
+              margin-bottom: 8px;
+              color: #333;
+            }
+            .answer {
+              margin-left: 20px;
+              color: #555;
+              white-space: pre-wrap;
+              word-wrap: break-word;
+            }
+            @media print {
+              body { padding: 10px; }
+              .answer-sheet-section { page-break-after: always; }
+              .question-answer { page-break-inside: avoid; }
+            }
+          </style>
+        </head>
+        <body>
+          ${allSheets
+            .map((sheet) => {
+              const idNumber = extractIdNumber(sheet.student_email);
+              return `
+              <div class="answer-sheet-section">
+                <div class="id-number">ID Number: ${idNumber}</div>
+                ${sheet.data
+                  .map((item, index) => {
+                    const question = Object.keys(item)[0];
+                    const answer = item[question] || "No answer provided";
+                    return `
+                    <div class="question-answer">
+                      <div class="question">${escapeHTML(question)}</div>
+                      <div class="answer">${escapeHTML(answer)}</div>
+                    </div>
+                  `;
+                  })
+                  .join("")}
+              </div>
+            `;
+            })
+            .join("")}
+        </body>
+      </html>
+    `;
+  };
+
+  const downloadAllPDF = async () => {
     try {
       setDownloadingAll(true);
+
+      // Fetch all answer sheets with full details
       const allSheets = await Promise.all(
         answerSheets.map(async (sheet) => {
           const response = await fetch(
@@ -333,41 +388,31 @@ const TeacherPanel = () => {
         })
       );
 
-      const printContent = `
-        <html>
-          <head>
-            <title>All Answer Sheets</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 20px; }
-              .answer-sheet { margin-bottom: 30px; }
-              @media print {
-                body { padding: 0; }
-                .answer-sheet { page-break-after: always; }
-              }
-            </style>
-          </head>
-          <body>
-            ${allSheets.map((sheet) => generatePrintContent(sheet)).join("")}
-          </body>
-        </html>
-      `;
+      // Generate PDF content
+      const pdfContent = generateAllPDFContent(allSheets);
 
+      // Use iframe to open print dialog (user can save as PDF from there)
       const iframe = document.createElement("iframe");
       iframe.style.display = "none";
       document.body.appendChild(iframe);
 
       iframe.contentWindow.document.open();
-      iframe.contentWindow.document.write(printContent);
+      iframe.contentWindow.document.write(pdfContent);
       iframe.contentWindow.document.close();
 
       iframe.onload = () => {
-        iframe.contentWindow.print();
         setTimeout(() => {
-          document.body.removeChild(iframe);
-        }, 100);
+          iframe.contentWindow.print();
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+          }, 100);
+        }, 250);
       };
+
+      toast.success("Opening print dialog...");
     } catch (error) {
-      toast.error("Failed to download all answer sheets");
+      toast.error("Failed to download answer sheets");
+      console.error("Error downloading answer sheets:", error);
     } finally {
       setDownloadingAll(false);
     }
@@ -713,19 +758,7 @@ const TeacherPanel = () => {
                 <div className="space-y-4">
                   <div className="flex gap-4 justify-end mb-4">
                     <button
-                      onClick={downloadAiScores}
-                      disabled={downloadingScores}
-                      className="flex items-center px-4 py-2 text-yellow-400 bg-yellow-500/20 rounded-lg hover:bg-yellow-500/30 transition-all duration-300"
-                    >
-                      {downloadingScores ? (
-                        <Loader className="w-4 h-4 animate-spin mr-2" />
-                      ) : (
-                        <FileText className="w-4 h-4 mr-2" />
-                      )}
-                      Download AI Scores
-                    </button>
-                    <button
-                      onClick={downloadAllPDFs}
+                      onClick={downloadAllPDF}
                       disabled={downloadingAll}
                       className="flex items-center px-4 py-2 text-green-400 bg-green-500/20 rounded-lg hover:bg-green-500/30 transition-all duration-300"
                     >
