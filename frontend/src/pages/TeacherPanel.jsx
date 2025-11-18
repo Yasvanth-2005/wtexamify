@@ -302,13 +302,21 @@ const TeacherPanel = () => {
               margin-bottom: 30px;
               page-break-after: always;
             }
-            .id-number {
+            .student-info {
               font-size: 16px;
               font-weight: bold;
               margin-bottom: 15px;
               color: #2196F3;
               border-bottom: 2px solid #2196F3;
-              padding-bottom: 5px;
+              padding-bottom: 10px;
+            }
+            .info-item {
+              margin-bottom: 5px;
+              font-size: 14px;
+            }
+            .info-label {
+              font-weight: bold;
+              color: #333;
             }
             .question-answer {
               margin-bottom: 20px;
@@ -340,7 +348,17 @@ const TeacherPanel = () => {
               const idNumber = extractIdNumber(sheet.student_email);
               return `
               <div class="answer-sheet-section">
-                <div class="id-number">ID Number: ${idNumber}</div>
+                <div class="student-info">
+                  <div class="info-item">
+                    <span class="info-label">Student Name:</span> ${escapeHTML(sheet.student_name || "N/A")}
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Set Number:</span> ${sheet.set_number || "N/A"}
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">User ID Number:</span> ${idNumber || "N/A"}
+                  </div>
+                </div>
                 ${sheet.data
                   .map((item, index) => {
                     const question = Object.keys(item)[0];
