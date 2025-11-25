@@ -30,6 +30,7 @@ var allowedTeacherEmails = []string{
 	"vasu.challapalli9@gmail.com",
 	"yasvanthhanumantu1@gmail.com",
 	"vasuch9491@gmail.com",
+	"ramavathmallikarjunanaik332@gmail.com",
 	// Add more teacher/admin emails here
 }
 
