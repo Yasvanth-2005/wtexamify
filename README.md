@@ -1,4 +1,5 @@
 # 💻 Examify Rgukt
+
 Examify RGUKT is a modern, secure, and intelligent online exam platform designed specifically for RGUKT students and faculty. It supports seamless exam creation, strict anti-cheating mechanisms, and AI-powered evaluation.
 
 ![Go](https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white)
@@ -10,21 +11,23 @@ Examify RGUKT is a modern, secure, and intelligent online exam platform designed
 
 This project, **Examify RGUKT**, was built on the request of [**Vasu Neninthe Sir**](https://www.linkedin.com/in/vasu-neninthe/), who entrusted me with the opportunity to develop a full-fledged online exam platform tailored for RGUKT.
 
-Thanks to his guidance and support, **we successfully conducted real-time exams** for over **180+ students** across two subjects:
+Thanks to his guidance and support, **we successfully conducted real-time exams** for over **480+ students** across two subjects:
 
-- 🌐 **Web Technologies** – External Exam & 10-bit Viva  
-- 🧠 **Computer Organization & Architecture** – 15-bit Viva  
+- 🌐 **Web Technologies** – External Exam & 10-bit Viva (N21 batch 180+ students)
+- 🧠 **Computer Organization & Architecture** – 15-bit Viva (N21 batch 180+ students)
+- 🌐 **Database management systems** – External Exam & 10-bit Viva (N22 batch 120+ students)
+- 💻 **Operating systems** – 10-bit Viva (N21 barch 360 students)
 
 This experience not only made the platform come alive in a real educational environment, but also helped validate its robustness, scalability, and usefulness in a real academic setting.
 
 Thank you, sir, for believing in this project!
 
-
- 
 # 🚀 Deployment
+
 [![Live Site](https://img.shields.io/badge/🚀%20Live%20Site-Examify-8B1F1F?style=for-the-badge&logo=vercel&logoColor=white)](https://examifyrgukt.vercel.app/)
 
 # 🎯 Features Overview
+
 ### 👩‍🎓 Student Panel
 
 - ✅ **RGUKT Email Login**: Students login using their RGUKT email ID.
@@ -47,8 +50,6 @@ Thank you, sir, for believing in this project!
 
 > 🔑 For the secret code to unlock the "Copied" box or to refresh questions manually, please contact: **maheshkarri2222@gmail.com**
 
-
-
 ### 🔐 Exam Integrity
 
 - 🚫 **No Reload / Back / Tab Switch**: Students are blocked from reloading the page, going back, or opening new tabs.
@@ -69,29 +70,33 @@ Thank you, sir, for believing in this project!
 
 - ⚛️ **Frontend**: React.js
 - 🎨 **Styling**: Tailwind CSS
-- 🦫 **Backend**: Go (Golang) – *Loved working with it!*
+- 🦫 **Backend**: Go (Golang) – _Loved working with it!_
 - 🍃 **Database**: MongoDB
 
-# 🌟 Working Model 
+# 🌟 Working Model
+
 ### 🔐 Login
+
 - 🎓 **RGUKT Email**: Grants access to the **Student Panel**
 - 👨‍🏫 **Any Valid Email**: Grants access to the **Teacher Panel**
-<img width="500" alt="Screenshot 2025-06-20 at 09 55 20" src="https://github.com/user-attachments/assets/ca8fda55-99aa-46d8-9294-d0ea3a578307" />
+  <img width="500" alt="Screenshot 2025-06-20 at 09 55 20" src="https://github.com/user-attachments/assets/ca8fda55-99aa-46d8-9294-d0ea3a578307" />
 
 ### 👨‍🏫 Teacher Panel
+
 - Available exams
-<img width="500" alt="Screenshot 2025-06-20 at 10 10 15" src="https://github.com/user-attachments/assets/088236de-9bdc-4d27-a194-8adf79cde944" />
+  <img width="500" alt="Screenshot 2025-06-20 at 10 10 15" src="https://github.com/user-attachments/assets/088236de-9bdc-4d27-a194-8adf79cde944" />
 
 - Create Exam
 
 <img width="500" alt="Screenshot 2025-06-20 at 10 59 29" src="https://github.com/user-attachments/assets/833c4261-2e9d-4c71-a58e-4f6a6ff1c851" />
 
 - Other Featuers
-<img width="500" alt="Screenshot 2025-06-20 at 10 07 16" src="https://github.com/user-attachments/assets/01f9bece-f819-4e45-8703-c2c182d5e211" />
-<img width="500" alt="Screenshot 2025-06-20 at 10 07 41" src="https://github.com/user-attachments/assets/d2d67e75-072a-4f9b-93c9-470688b27104" />
-<img width="500" alt="Screenshot 2025-06-20 at 10 07 55" src="https://github.com/user-attachments/assets/ad5c86d7-7b70-4b5a-817e-eca2e007a76f" />
+  <img width="500" alt="Screenshot 2025-06-20 at 10 07 16" src="https://github.com/user-attachments/assets/01f9bece-f819-4e45-8703-c2c182d5e211" />
+  <img width="500" alt="Screenshot 2025-06-20 at 10 07 41" src="https://github.com/user-attachments/assets/d2d67e75-072a-4f9b-93c9-470688b27104" />
+  <img width="500" alt="Screenshot 2025-06-20 at 10 07 55" src="https://github.com/user-attachments/assets/ad5c86d7-7b70-4b5a-817e-eca2e007a76f" />
 
 ### 👩‍🎓 Student Panel
+
 - Available Exams
 
 <img width="500" alt="Screenshot 2025-06-20 at 10 15 22" src="https://github.com/user-attachments/assets/175308c7-0280-44af-8ba1-e7b69f687512" />
@@ -117,22 +122,10 @@ Thank you, sir, for believing in this project!
 <img width="500" alt="Screenshot 2025-06-20 at 10 17 56" src="https://github.com/user-attachments/assets/fbb35ef7-5868-4926-9ed8-1b75ccc98ace" />
 
 - Viva
-<img width="500" alt="Screenshot 2025-06-20 at 10 18 10" src="https://github.com/user-attachments/assets/de467860-c862-47fe-838c-ca248f9e983c" />
-
-
-
-
+  <img width="500" alt="Screenshot 2025-06-20 at 10 18 10" src="https://github.com/user-attachments/assets/de467860-c862-47fe-838c-ca248f9e983c" />
 
 ### 📬 Contact Me
 
 - 📧 **Email**: [maheshkarri2109@gmail.com](mailto:maheshkarri2109@gmail.com)
 - 📱 **Phone**: +91-8008791096
 - 💼 **LinkedIn**: [linkedin.com/in/maheshkarri4444](https://www.linkedin.com/in/maheshkarri4444/)
-
-
-
-
-
-
-
-
