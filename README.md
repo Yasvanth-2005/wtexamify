@@ -79,12 +79,14 @@ Thank you, sir, for believing in this project!
 
 - 🎓 **RGUKT Email**: Grants access to the **Student Panel**
 - 👨‍🏫 **Any Valid Email**: Grants access to the **Teacher Panel**
-  <img width="500" alt="Screenshot 2025-06-20 at 09 55 20" src="https://github.com/user-attachments/assets/ca8fda55-99aa-46d8-9294-d0ea3a578307" />
+
+<img width="500" alt="Screenshot 2025-06-20 at 09 55 20" src="https://github.com/user-attachments/assets/ca8fda55-99aa-46d8-9294-d0ea3a578307" />
 
 ### 👨‍🏫 Teacher Panel
 
 - Available exams
-  <img width="500" alt="Screenshot 2025-06-20 at 10 10 15" src="https://github.com/user-attachments/assets/088236de-9bdc-4d27-a194-8adf79cde944" />
+  
+<img width="500" alt="Screenshot 2025-06-20 at 10 10 15" src="https://github.com/user-attachments/assets/088236de-9bdc-4d27-a194-8adf79cde944" />
 
 - Create Exam
 
@@ -122,7 +124,8 @@ Thank you, sir, for believing in this project!
 <img width="500" alt="Screenshot 2025-06-20 at 10 17 56" src="https://github.com/user-attachments/assets/fbb35ef7-5868-4926-9ed8-1b75ccc98ace" />
 
 - Viva
-  <img width="500" alt="Screenshot 2025-06-20 at 10 18 10" src="https://github.com/user-attachments/assets/de467860-c862-47fe-838c-ca248f9e983c" />
+  
+<img width="500" alt="Screenshot 2025-06-20 at 10 18 10" src="https://github.com/user-attachments/assets/de467860-c862-47fe-838c-ca248f9e983c" />
 
 ### 📬 Contact Me
 
