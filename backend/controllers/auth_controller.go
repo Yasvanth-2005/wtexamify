@@ -102,30 +102,42 @@ func GoogleCallback(c *gin.Context) {
 	googleID, _ := userInfo["id"].(string)
 	image, _ := userInfo["picture"].(string)
 
-	// Check if email is in teacher/admin whitelist
-	isTeacher := false
-	for _, allowedEmail := range allowedTeacherEmails {
-		if email == allowedEmail {
-			isTeacher = true
-			break
-		}
+	// // Check if email is in teacher/admin whitelist
+	// isTeacher := false
+	// for _, allowedEmail := range allowedTeacherEmails {
+	// 	if email == allowedEmail {
+	// 		isTeacher = true
+	// 		break
+	// 	}
+	// }
+
+	// // If not a teacher, check if it's a valid RGUKT student email
+	// if !isTeacher {
+	// 	if !strings.HasSuffix(email, "@rguktn.ac.in") {
+	// 		// Not a teacher and not an RGUKT email - deny access
+	// 		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied. Your email is not authorized to use this system."})
+	// 		return
+	// 	}
+	// 	// RGUKT email - allowed (frontend validates domain only)
+	// }
+
+	// // Determine role
+	// role := "student"
+	// if isTeacher {
+	// 	role = "teacher"
+	// } else if strings.HasSuffix(email, "@rguktn.ac.in") {
+	// 	role = "student"
+	// }
+
+	// Determine role based on email domain
+	isTeacher := true
+	if strings.HasSuffix(email, "@rguktn.ac.in") {
+		isTeacher = false
 	}
 
-	// If not a teacher, check if it's a valid RGUKT student email
+	// Assign role
+	role := "teacher"
 	if !isTeacher {
-		if !strings.HasSuffix(email, "@rguktn.ac.in") {
-			// Not a teacher and not an RGUKT email - deny access
-			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied. Your email is not authorized to use this system."})
-			return
-		}
-		// RGUKT email - allowed (frontend validates domain only)
-	}
-
-	// Determine role
-	role := "student"
-	if isTeacher {
-		role = "teacher"
-	} else if strings.HasSuffix(email, "@rguktn.ac.in") {
 		role = "student"
 	}
 
