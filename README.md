@@ -24,7 +24,7 @@ Thank you, sir, for believing in this project!
 
 # 🚀 Deployment
 
-[![Live Site](https://img.shields.io/badge/🚀%20Live%20Site-Examify-8B1F1F?style=for-the-badge&logo=vercel&logoColor=white)](https://examifyrgukt.vercel.app/)
+[![Live Site](https://img.shields.io/badge/🚀%20Live%20Site-Examify-8B1F1F?style=for-the-badge&logo=vercel&logoColor=white)](https://labexamsrgukt.vercel.app/)
 
 # 🎯 Features Overview
 
