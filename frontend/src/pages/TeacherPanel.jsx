@@ -495,37 +495,6 @@ const TeacherPanel = () => {
                 <p>${question}</p>
                 <p><strong>Answer:</strong></p>
                 <p>${answer || "No answer provided"}</p>
-                ${
-                  aiEval
-                    ? `
-                  <div class="ai-section">
-                    <strong>AI Overview & Explanation:</strong><br>
-                    ${
-                      aiEval.explanation
-                        ? `<div class="ai-explanation">
-                            <strong>Explanation:</strong> ${aiEval.explanation}
-                          </div>`
-                        : ""
-                    }
-                    ${
-                      aiEval.overview
-                        ? `<div class="ai-overview">
-                            <strong>Overview:</strong> ${aiEval.overview}
-                          </div>`
-                        : ""
-                    }
-                    <div style="margin-top: 10px;">
-                      <strong>Status:</strong>
-                      <span class="status-badge ${
-                        aiEval.status === "will execute"
-                          ? "status-execute"
-                          : "status-not-execute"
-                      }">${aiEval.status}</span>
-                    </div>
-                  </div>
-                `
-                    : ""
-                }
               </div>
             `;
             })
@@ -655,13 +624,13 @@ const TeacherPanel = () => {
               <Plus className="w-5 h-5 mr-2" />
               Create Exam
             </button>
-            <button
+            {/* <button
               onClick={() => setShowEmailModal(true)}
               className="flex items-center px-4 py-2 text-white bg-green-500 rounded-lg hover:bg-green-600 transition-all duration-300"
             >
               <Mail className="w-5 h-5 mr-2" />
               Send Emails
-            </button>
+            </button> */}
           </div>
         </div>
 

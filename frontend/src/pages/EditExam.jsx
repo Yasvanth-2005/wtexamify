@@ -2,12 +2,16 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
-import { ArrowLeft, Trash } from 'lucide-react';
+import { ArrowLeft, Trash2, PlusCircle, Loader } from 'lucide-react';
 import Allapi from '../utils/common';
 
 const EditExam = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+
+  const [pageLoading, setPageLoading] = useState(true);   // initial data fetch
+  const [saveLoading, setSaveLoading] = useState(false);   // form submit
+  const [newQuestion, setNewQuestion] = useState('');
   const [examData, setExamData] = useState({
     name: '',
     duration: 0,
@@ -21,11 +25,12 @@ const EditExam = () => {
 
   const fetchExamData = async () => {
     try {
+      setPageLoading(true);
       const response = await fetch(Allapi.getExam.url(id), {
+        method: 'GET',
         headers: {
           Authorization: localStorage.getItem('token'),
         },
-        method:"GET"
       });
 
       if (!response.ok) {
@@ -33,61 +38,104 @@ const EditExam = () => {
         throw new Error(data.error || 'Failed to fetch exam data');
       }
 
-      const exam = await response.json();
-    //   console.log("exam: ",exam.exam)
-      setExamData(exam.exam);
-      console.log("examData at edit eam:",examData)
-
+      const result = await response.json();
+      // result.exam has { name, duration, exam_type, questions[] }
+      setExamData(result.exam);
     } catch (error) {
-      toast.error('Failed to fetch exam data');
+      toast.error(error.message || 'Failed to fetch exam data');
       navigate('/teacher');
+    } finally {
+      setPageLoading(false);
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
     setExamData(prev => ({
       ...prev,
-      [name]: name === 'duration' ? parseInt(value, 10) || '' : value, // Ensure duration is int
+      [name]: name === 'duration' ? (value === '' ? '' : parseInt(value, 10)) : value,
     }));
   };
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
+
     const reader = new FileReader();
     reader.onload = (evt) => {
-      const bstr = evt.target.result;
-      const wb = XLSX.read(bstr, { type: 'binary' });
-      const wsname = wb.SheetNames[0];
-      const ws = wb.Sheets[wsname];
-      const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
-      const questions = data
-        .map(row => row[0])
-        .filter(question => question && typeof question === 'string' && question.trim() !== '');
+        const questions = data
+          .map(row => row[0])
+          .filter(question => question && typeof question === 'string' && question.trim() !== '');
 
-      setExamData(prev => ({
-        ...prev,
-        questions
-      }));
+        setExamData(prev => ({
+          ...prev,
+          questions: [...prev.questions, ...questions]
+        }));
+        toast.success(`${questions.length} question(s) loaded from file`);
+      } catch {
+        toast.error('Failed to parse Excel file');
+      } finally {
+        e.target.value = '';
+      }
     };
+    reader.onerror = () => toast.error('Failed to read file');
     reader.readAsBinaryString(file);
+  };
+
+  const handleAddQuestion = () => {
+    const trimmed = newQuestion.trim();
+    if (!trimmed) {
+      toast.error('Question cannot be empty');
+      return;
+    }
+    setExamData(prev => ({
+      ...prev,
+      questions: [...prev.questions, trimmed]
+    }));
+    setNewQuestion('');
+  };
+
+  const handleNewQuestionKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddQuestion();
+    }
+  };
+
+  const handleQuestionEdit = (index, newValue) => {
+    const updatedQuestions = [...examData.questions];
+    updatedQuestions[index] = newValue;
+    setExamData(prev => ({ ...prev, questions: updatedQuestions }));
+  };
+
+  const handleQuestionDelete = (index) => {
+    setExamData(prev => ({
+      ...prev,
+      questions: prev.questions.filter((_, i) => i !== index)
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!examData.name || !examData.duration || examData.questions.length === 0) {
-      toast.error('Please fill all required fields');
+      toast.error('Please fill all required fields and add at least one question');
       return;
     }
 
     try {
+      setSaveLoading(true);
       const response = await fetch(Allapi.updateExam.url.replace(':id', id), {
         method: 'PUT',
         headers: {
-          'Authorization': localStorage.getItem('token'),
+          Authorization: localStorage.getItem('token'),
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(examData),
@@ -101,30 +149,33 @@ const EditExam = () => {
       toast.success('Exam updated successfully');
       navigate('/teacher');
     } catch (error) {
-      toast.error('Failed to update exam');
+      toast.error(error.message || 'Failed to update exam');
+    } finally {
+      setSaveLoading(false);
     }
   };
 
-  const handleQuestionEdit = (index, newValue) => {
-    const updatedQuestions = [...examData.questions];
-    updatedQuestions[index] = newValue;
-    setExamData(prev => ({
-      ...prev,
-      questions: updatedQuestions
-    }));
-  };
-
-  const handleQuestionDelete = (index) => {
-    setExamData(prev => ({
-      ...prev,
-      questions: prev.questions.filter((_, i) => i !== index)
-    }));
-  };
+  // Full-page loader while fetching exam data
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative w-16 h-16 mx-auto mb-4">
+            <div className="absolute w-full h-full border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+            <div className="absolute border-4 border-blue-300 rounded-full top-1 left-1 w-14 h-14 border-t-transparent animate-spin" style={{ animationDuration: '1.5s' }}></div>
+          </div>
+          <p className="text-white text-lg">Loading exam...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
       <div className="max-w-3xl mx-auto">
         <div className="bg-gray-800 rounded-lg shadow-xl p-6 border-2 border-blue-500/20">
+
+          {/* Header */}
           <div className="flex items-center gap-4 mb-6">
             <button
               onClick={() => navigate('/teacher')}
@@ -136,6 +187,8 @@ const EditExam = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+
+            {/* Exam Name */}
             <div>
               <label className="block text-sm font-medium text-gray-300">Exam Name</label>
               <input
@@ -147,6 +200,7 @@ const EditExam = () => {
               />
             </div>
 
+            {/* Duration */}
             <div>
               <label className="block text-sm font-medium text-gray-300">Duration (minutes)</label>
               <input
@@ -154,10 +208,12 @@ const EditExam = () => {
                 name="duration"
                 value={examData.duration}
                 onChange={handleInputChange}
+                min="1"
                 className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
 
+            {/* Exam Type */}
             <div>
               <label className="block text-sm font-medium text-gray-300">Exam Type</label>
               <select
@@ -168,12 +224,16 @@ const EditExam = () => {
               >
                 <option value="internal">Internal</option>
                 <option value="external">External</option>
-                <option value="viva">Viva</option>
+                <option value="viva">10-Viva</option>
+                <option value="coaviva">15-Viva</option>
               </select>
             </div>
 
+            {/* Upload Questions from Excel */}
             <div>
-              <label className="block text-sm font-medium text-gray-300">Upload New Questions (Excel file)</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Upload New Questions (Excel file — single column)
+              </label>
               <input
                 type="file"
                 accept=".xlsx,.xls"
@@ -185,36 +245,81 @@ const EditExam = () => {
                   file:bg-blue-500/20 file:text-blue-400
                   hover:file:bg-blue-500/30"
               />
+              <p className="mt-1 text-xs text-gray-500">Uploaded questions will be appended to the existing list.</p>
             </div>
 
+            {/* Add Question Manually */}
             <div>
-              <h3 className="text-lg font-medium text-white mb-3">Questions</h3>
-              <div className="space-y-3">
-                {examData.questions.map((question, index) => (
-                  <div key={index} className="flex gap-2">
-                    <input
-                      type="text"
-                      value={question}
-                      onChange={(e) => handleQuestionEdit(index, e.target.value)}
-                      className="block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleQuestionDelete(index)}
-                      className="p-2 text-red-400 hover:text-red-600 transition-colors"
-                    >
-                      <Trash className="w-5 h-5" />
-                    </button>
-                  </div>
-                ))}
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Add Question Manually
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newQuestion}
+                  onChange={(e) => setNewQuestion(e.target.value)}
+                  onKeyDown={handleNewQuestionKeyDown}
+                  placeholder="Type a question and press Enter or click Add"
+                  className="flex-grow rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3 py-2"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddQuestion}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  Add
+                </button>
               </div>
             </div>
 
-            <div className="flex justify-end gap-4 pt-4">
-              <button type="button" onClick={() => navigate('/teacher')} className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 rounded-md hover:bg-gray-600 transition-colors">
+            {/* Questions List */}
+            <div>
+              <h3 className="text-lg font-medium text-white mb-3">
+                Questions ({examData.questions.length})
+              </h3>
+              {examData.questions.length === 0 ? (
+                <p className="text-sm text-gray-500 italic">No questions yet. Upload an Excel file or add manually above.</p>
+              ) : (
+                <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                  {examData.questions.map((question, index) => (
+                    <div key={index} className="flex gap-2 items-center group">
+                      <span className="text-gray-400 text-sm w-6 shrink-0 text-right">{index + 1}.</span>
+                      <input
+                        type="text"
+                        value={question}
+                        onChange={(e) => handleQuestionEdit(index, e.target.value)}
+                        className="flex-grow block rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleQuestionDelete(index)}
+                        className="p-2 text-red-400 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all duration-200 shrink-0"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-4 pt-4 border-t border-gray-700">
+              <button
+                type="button"
+                onClick={() => navigate('/teacher')}
+                disabled={saveLoading}
+                className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 rounded-md hover:bg-gray-600 transition-colors"
+              >
                 Cancel
               </button>
-              <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors">
+              <button
+                type="submit"
+                disabled={saveLoading}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
+              >
+                {saveLoading && <Loader className="w-4 h-4 animate-spin" />}
                 Save Changes
               </button>
             </div>
