@@ -34,6 +34,10 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"message": "Server is running!"})
 	})
 
+	r.GET("/hi", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"message": "hi"})
+	})
+
 	routes.AuthRoutes(r)
 	routes.AnswerSheetRoutes(r)
 	routes.ExamRoutes(r)

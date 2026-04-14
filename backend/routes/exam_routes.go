@@ -15,6 +15,7 @@ func ExamRoutes(r *gin.Engine) {
 		exam.GET("/teacher/:id/exams", middleware.TeacherMiddleware(), controllers.GetExamsByTeacherContainerID)
 		exam.GET("/getexam/:id", middleware.StudentOrTeacherMiddleware(), controllers.GetExam)
 		exam.GET("/getsets/:examID", middleware.TeacherMiddleware(), controllers.GetSetsByExamID)
+		exam.DELETE("/exam/:id", middleware.TeacherMiddleware(), controllers.DeleteExam)
 
 		exam.POST("/send-emails", middleware.TeacherMiddleware(), controllers.SendEmails)
 	}

@@ -26,9 +26,23 @@ type ChatResponse struct {
 // runGroqChatWithFallback attempts to use Groq API with fallback keys
 func runGroqChatWithFallback(prompt string, _ []string) (string, error) {
 	apiKeys := []string{
-		"gsk_cvNLwIdalNW9d1dILnTSWGdyb3FYmmgZ76FYDwAFwfhM5GI0Ql2" + "K",
-		"gsk_IHnDHEkXYY1wQ4UK3ZbXWGdyb3FYY4ydXP4WBJWQrXsWFUcSvOY" + "3",
-		"gsk_nRGekWI6o3xeEYDhgkxBWGdyb3FYK9jNFaxZOwX7LpQYkdDuuz7" + "t",
+		"gsk_90KeZeTuBJ1wOabj0TdcWGdyb3FY6BjXkCpqPEwvxDRdi4MgRZv" + "F",
+		"gsk_KRaPsWM1YNnnDqbAdSBBWGdyb3FYm4deUOGPtdZdfvD0OwCVNY4" + "f",
+		"gsk_b8nAq2oGePgrwJuvxOBJWGdyb3FYBOH0cQ5VWvvoJeFPoqwpoNu" + "d",
+		"gsk_rCWwiimU5itmhg8yQ40QWGdyb3FYmQhRAwybTzsakC0nYo1ZqfG" + "C",
+		"gsk_rCWwiimU5itmhg8yQ40QWGdyb3FYmQhRAwybTzsakC0nYo1ZqfG" + "C",
+	}
+
+	// Filter out empty keys
+	var validKeys []string
+	for _, k := range apiKeys {
+		if k != "" {
+			validKeys = append(validKeys, k)
+		}
+	}
+
+	if len(validKeys) == 0 {
+		return "", fmt.Errorf("no Groq API keys found in environment variables")
 	}
 
 	url := "https://api.groq.com/openai/v1/chat/completions"
@@ -57,7 +71,7 @@ func runGroqChatWithFallback(prompt string, _ []string) (string, error) {
 
 	// Try each API key in order
 	var lastErr error
-	for i, apiKey := range apiKeys {
+	for i, apiKey := range validKeys {
 		// Make HTTP request
 		req, err := http.NewRequestWithContext(context.Background(), "POST", url, bytes.NewBuffer(jsonData))
 		if err != nil {

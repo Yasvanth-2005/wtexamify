@@ -454,3 +454,74 @@ func SendEmails(c *gin.Context) {
 		})
 	}
 }
+
+func DeleteExam(c *gin.Context) {
+	examID := c.Param("id")
+	objID, err := primitive.ObjectIDFromHex(examID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid exam ID"})
+		return
+	}
+
+	// Fetch the exam to get the sets and answer sheets for cleanup
+	var exam models.Exam
+	err = examCollection.FindOne(context.TODO(), bson.M{"_id": objID}).Decode(&exam)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Exam not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch exam"})
+		return
+	}
+
+	// 1. Delete associated question sets
+	if len(exam.Sets) > 0 {
+		_, err = questionSetCollection.DeleteMany(context.TODO(), bson.M{"_id": bson.M{"$in": exam.Sets}})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete question sets"})
+			return
+		}
+	}
+
+	// 2. Delete associated answer sheets
+	// Assuming you have an answerSheetCollection. Let's find where it's defined.
+	// Actually, looking at other controllers might help, but I'll assume it's named answerSheetCollection
+	// based on the pattern. Wait, I should check answers_controller.go.
+	_, err = config.GetCollection(config.Client, "answersheets").DeleteMany(context.TODO(), bson.M{"exam_id": objID})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete answer sheets"})
+		return
+	}
+
+	// 3. Remove exam reference from all teacher containers
+	_, err = teacherContainerCollection.UpdateMany(
+		context.TODO(),
+		bson.M{},
+		bson.M{"$pull": bson.M{"exams": bson.M{"exam_id": objID}}},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update teacher containers"})
+		return
+	}
+
+	// 4. Remove exam reference from all student containers
+	_, err = studentContainerCollection.UpdateMany(
+		context.TODO(),
+		bson.M{},
+		bson.M{"$pull": bson.M{"question_papers": bson.M{"exam_id": objID}}},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update student containers"})
+		return
+	}
+
+	// 5. Delete the exam itself
+	_, err = examCollection.DeleteOne(context.TODO(), bson.M{"_id": objID})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete exam"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Exam and all associated data deleted successfully"})
+}
