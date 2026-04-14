@@ -172,7 +172,7 @@ const CreateExam = () => {
                 name="name"
                 value={examData.name}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full px-4 py-2 rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="Enter exam name"
               />
             </div>
@@ -186,7 +186,7 @@ const CreateExam = () => {
                 value={examData.duration}
                 onChange={handleInputChange}
                 min="1"
-                className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full px-4 py-2 rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="Enter duration in minutes"
               />
             </div>
@@ -198,7 +198,7 @@ const CreateExam = () => {
                 name="exam_type"
                 value={examData.exam_type}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full px-4 py-2 rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="internal">Internal</option>
                 <option value="external">External</option>
@@ -273,7 +273,7 @@ const CreateExam = () => {
                           type="text"
                           value={question}
                           onChange={(e) => handleQuestionEdit(index, e.target.value)}
-                          className="block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                          className="block w-full px-4 py-2 rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
                         />
                       </div>
                       <button

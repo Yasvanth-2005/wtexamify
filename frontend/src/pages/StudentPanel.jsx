@@ -38,7 +38,20 @@ const StudentPanel = () => {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to fetch exams");
-      setExams(data.exams || []);
+      const sortedExams = (data.exams || []).sort((a, b) => {
+        // Try to get dates
+        const dateA = a.created_at?.$date ? new Date(a.created_at.$date) : a.created_at ? new Date(a.created_at) : null;
+        const dateB = b.created_at?.$date ? new Date(b.created_at.$date) : b.created_at ? new Date(b.created_at) : null;
+
+        if (dateA && dateB && dateA.getTime() !== dateB.getTime()) {
+          return dateB - dateA;
+        }
+
+        const idA = a.id || a._id || "";
+        const idB = b.id || b._id || "";
+        return idB.toString().localeCompare(idA.toString());
+      });
+      setExams(sortedExams);
     } catch (error) {
       toast.error("Failed to fetch exams");
     } finally {

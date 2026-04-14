@@ -55,8 +55,18 @@ const GoogleCallback = () => {
               return;
             }
           }
-          // For teachers, they are already validated by backend whitelist
-          // No additional check needed for teachers
+          // For teachers, validate against the allowed teacher emails list
+          if (data.user.role === "teacher") {
+            const { validateTeacherAccess } = await import("../utils/teacherValidation");
+            const isAllowed = validateTeacherAccess(data.user.email);
+            if (!isAllowed) {
+              console.log("Teacher email not authorized:", data.user.email);
+              toast.error("Access denied. Your email is not authorized as a teacher.");
+              localStorage.clear();
+              navigate("/login", { replace: true });
+              return;
+            }
+          }
 
           const targetPath = `/${data.user.role}`;
           console.log("Navigating to:", targetPath); // Debug log

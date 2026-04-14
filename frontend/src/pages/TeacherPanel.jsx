@@ -9,6 +9,7 @@ import {
   Loader,
   Mail,
   Printer,
+  Trash2,
 } from "lucide-react";
 import Allapi from "../utils/common";
 import studentsData from "../utils/students_data.json";
@@ -27,6 +28,7 @@ const TeacherPanel = () => {
   const [downloadingAll, setDownloadingAll] = useState(false);
   const [sendingEmails, setSendingEmails] = useState({});
   const [loadingExamStatus, setLoadingExamStatus] = useState({});
+  const [deletingExams, setDeletingExams] = useState({});
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [selectedClass, setSelectedClass] = useState("");
   const [sendingBulkEmails, setSendingBulkEmails] = useState(false);
@@ -154,7 +156,23 @@ const TeacherPanel = () => {
       );
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to fetch exams");
-      setExams(data.exams || []);
+      const sortedExams = (data.exams || []).sort((a, b) => {
+        // Try to get dates
+        const dateA = a.created_at?.$date ? new Date(a.created_at.$date) : a.created_at ? new Date(a.created_at) : null;
+        const dateB = b.created_at?.$date ? new Date(b.created_at.$date) : b.created_at ? new Date(b.created_at) : null;
+
+        // If both have valid dates and they are different, sort by date
+        if (dateA && dateB && dateA.getTime() !== dateB.getTime()) {
+          return dateB - dateA;
+        }
+
+        // Fallback to sorting by _id (which includes timestamp for MongoDB)
+        // or just keep original order if IDs are missing
+        const idA = a._id?.$oid || a._id || "";
+        const idB = b._id?.$oid || b._id || "";
+        return idB.toString().localeCompare(idA.toString());
+      });
+      setExams(sortedExams);
     } catch (error) {
       toast.error("Failed to fetch exams");
     } finally {
@@ -190,6 +208,37 @@ const TeacherPanel = () => {
       toast.error("Failed to update exam status");
     } finally {
       setLoadingExamStatus((prev) => ({ ...prev, [examId]: false }));
+    }
+  };
+
+  const handleDeleteExam = async (examId) => {
+    if (!window.confirm("Are you sure you want to delete this exam? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      setDeletingExams((prev) => ({ ...prev, [examId]: true }));
+      const response = await fetch(
+        Allapi.deleteExam.url.replace(":id", examId),
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: localStorage.getItem("token"),
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete exam");
+      }
+
+      toast.success("Exam deleted successfully");
+      await fetchExams();
+    } catch (error) {
+      toast.error(error.message || "Failed to delete exam");
+    } finally {
+      setDeletingExams((prev) => ({ ...prev, [examId]: false }));
     }
   };
 
@@ -248,7 +297,9 @@ const TeacherPanel = () => {
   };
 
   const escapeHTML = (str) => {
+    if (str === null || str === undefined) return "";
     return str
+      .toString()
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -272,7 +323,7 @@ const TeacherPanel = () => {
             return `
             <div class="question" style="margin-bottom: 20px;">
               <h3>Question ${index + 1}:</h3>
-              <p>${question}</p>
+              <p>${escapeHTML(question)}</p>
               <div class="answer" style="margin-left: 20px; color: #444;">
                 <strong>Answer:</strong>
                 <pre style="white-space: pre-wrap; word-wrap: break-word; background: #f4f4f4; padding: 10px; border-radius: 5px;">
@@ -465,7 +516,10 @@ const TeacherPanel = () => {
           <p><strong>Set Number:</strong> ${data.answerSheet.set_number}</p>
           <p><strong>Copy Count:</strong> ${data.answerSheet.copy_count}</p>
           <p><strong>AI Score:</strong> ${
-            data.answerSheet.ai_score || "N/A"
+            data.answerSheet.ai_score !== undefined &&
+            data.answerSheet.ai_score !== null
+              ? data.answerSheet.ai_score
+              : "N/A"
           }</p>
           <hr style="margin: 20px 0;">
           ${data.answerSheet.data
@@ -492,9 +546,11 @@ const TeacherPanel = () => {
               return `
               <div class="question">
                 <div class="question-title">Question ${questionNumber}</div>
-                <p>${question}</p>
+                <p>${escapeHTML(question)}</p>
                 <p><strong>Answer:</strong></p>
-                <p>${answer || "No answer provided"}</p>
+                <pre style="white-space: pre-wrap; word-wrap: break-word; background: #f4f4f4; padding: 10px; border-radius: 5px;">${
+                  escapeHTML(answer) || "No answer provided"
+                }</pre>
               </div>
             `;
             })
@@ -645,9 +701,23 @@ const TeacherPanel = () => {
                   <h2 className="text-xl font-semibold text-white">
                     {exam.name}
                   </h2>
-                  <span className="px-2 py-1 text-sm rounded-full bg-blue-500/20 text-blue-400">
-                    {exam.exam_type === "coaviva" ? "15 Viva" : exam.exam_type}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-1 text-sm rounded-full bg-blue-500/20 text-blue-400 whitespace-nowrap">
+                      {exam.exam_type === "coaviva" ? "15 Viva" : exam.exam_type}
+                    </span>
+                    <button
+                      onClick={() => handleDeleteExam(exam.id)}
+                      disabled={deletingExams[exam.id]}
+                      className="p-1.5 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all duration-300 disabled:opacity-50"
+                      title="Delete Exam"
+                    >
+                      {deletingExams[exam.id] ? (
+                        <Loader className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-2 text-gray-300">
                   <div className="flex items-center">

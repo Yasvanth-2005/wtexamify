@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -44,14 +45,14 @@ func isEmailAllowed(email string) bool {
 	return strings.HasSuffix(email, "@rguktn.ac.in")
 }
 
-var googleOauthConfig = &oauth2.Config{
-	ClientID:     "117664400321-kchnk20sjd2m9h46u0e1go3194d19uut.apps.googleusercontent.com",
-	ClientSecret: "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",
-	// RedirectURL:  "https://labexamsrgukt.vercel.app/google/callback",
-	RedirectURL:  "https://vastlabs.netlify.app/google/callback",
-	// RedirectURL: "http://localhost:5173/google/callback",
-	Scopes:   []string{"email", "profile"},
-	Endpoint: google.Endpoint,
+func getGoogleOauthConfig() *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+		RedirectURL:  os.Getenv("GOOGLE_REDIRECT_URL"),
+		Scopes:       []string{"email", "profile"},
+		Endpoint:     google.Endpoint,
+	}
 }
 
 func generateJWT(email string) (string, error) {
@@ -64,7 +65,7 @@ func generateJWT(email string) (string, error) {
 }
 
 func GoogleLogin(c *gin.Context) {
-	url := googleOauthConfig.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
+	url := getGoogleOauthConfig().AuthCodeURL("state-token", oauth2.AccessTypeOffline)
 	c.Redirect(http.StatusFound, url)
 }
 
@@ -75,7 +76,7 @@ func GoogleCallback(c *gin.Context) {
 		return
 	}
 
-	token, err := googleOauthConfig.Exchange(context.TODO(), code)
+	token, err := getGoogleOauthConfig().Exchange(context.TODO(), code)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to exchange code", "details": err.Error()})
 		return

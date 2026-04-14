@@ -29,6 +29,10 @@ const Allapi = {
     url: `${backapi}/exam/exam/:id`,
     method: "PUT",
   },
+  deleteExam: {
+    url: `${backapi}/exam/exam/:id`,
+    method: "DELETE",
+  },
   sendEmails: {
     url: `${backapi}/exam/send-emails`,
     method: "POST",

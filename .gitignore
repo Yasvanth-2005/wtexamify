@@ -1,3 +1,8 @@
 node_modules
 .env
-./backend/.env
+backend/.env
+frontend/node_modules
+frontend/dist
+backend/bin
+*.log
+.DS_Store

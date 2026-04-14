@@ -196,7 +196,7 @@ const EditExam = () => {
                 name="name"
                 value={examData.name}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full px-4 py-2 rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
 
@@ -209,7 +209,7 @@ const EditExam = () => {
                 value={examData.duration}
                 onChange={handleInputChange}
                 min="1"
-                className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full px-4 py-2 rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
 
@@ -220,7 +220,7 @@ const EditExam = () => {
                 name="exam_type"
                 value={examData.exam_type}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full px-4 py-2 rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="internal">Internal</option>
                 <option value="external">External</option>
@@ -289,7 +289,7 @@ const EditExam = () => {
                         type="text"
                         value={question}
                         onChange={(e) => handleQuestionEdit(index, e.target.value)}
-                        className="flex-grow block rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                        className="flex-grow block px-4 py-2 rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
                       />
                       <button
                         type="button"

@@ -32,9 +32,23 @@ export const isStudentAllowed = (studentId, className = "cse4") => {
  * @param {string} className - Class name (optional, kept for backward compatibility but not used)
  * @returns {boolean} - True if email is from @rguktn.ac.in domain
  */
-export const validateStudentAccess = (email, className = null) => {
+export const validateStudentAccess = (email) => {
   if (!email) return false;
 
-  // Allow any email from @rguktn.ac.in domain
-  return email.toLowerCase().endsWith("@rguktn.ac.in");
+  const lowerEmail = email.toLowerCase();
+  
+  // 1. Allow any email from @rguktn.ac.in domain
+  if (!lowerEmail.endsWith("@rguktn.ac.in")) return false;
+
+  // 2. Extract ID from email (e.g., "n210368")
+  const idPrefix = lowerEmail.split("@")[0].toUpperCase();
+
+  // 3. Check if this ID exists in any class in students_data.json
+  // We flatten all classes into a single list of students
+  const allStudents = Object.values(studentsData).flat();
+  
+  // 4. Return true if idPrefix matches any student's idNumber
+  return allStudents.some(
+    (student) => student.idNumber && student.idNumber.toUpperCase() === idPrefix
+  );
 };

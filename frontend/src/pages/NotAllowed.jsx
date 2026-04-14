@@ -21,7 +21,7 @@ const NotAllowed = () => {
         <h1 className="text-3xl font-bold text-white mb-4">Access Denied</h1>
 
         <p className="text-gray-400 mb-2">
-          Your student ID is not registered in the system.
+          Your email address is not authorized to access this system.
         </p>
 
         <p className="text-gray-500 text-sm mb-8">

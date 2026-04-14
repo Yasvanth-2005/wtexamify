@@ -19,6 +19,8 @@ const ExamSession = () => {
   const [copied, setCopied] = useState(false);
   const [localCopyCount, setLocalCopyCount] = useState(0); // Local counter for cheating detection
   const lastViolationTimeRef = useRef(0); // Prevent rapid duplicate triggers
+  const answersRef = useRef({}); // Ref to store latest answers for handleSubmit
+  const isTransitioningFullScreenRef = useRef(false); // Guard for full-screen transitions
   const [passcode, setPasscode] = useState("");
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -37,6 +39,12 @@ const ExamSession = () => {
   const [aiAnswerStatus, setAiAnswerStatus] = useState([]);
   const [showResults, setShowResults] = useState(false);
   const user = JSON.parse(localStorage.getItem("user"));
+
+  // Extract questions from answerSheet.data
+  const questions = answerSheet?.data
+    ? answerSheet.data.map((answer) => Object.keys(answer)[0])
+    : [];
+  const currentQuestion = questions[activeQuestionIndex];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,6 +70,7 @@ const ExamSession = () => {
             initialAnswers[question] = answer[question];
           });
           setAnswers(initialAnswers);
+          answersRef.current = initialAnswers;
         }
 
         setCopied(answerSheetData.answerSheet.copied || false);
@@ -99,6 +108,29 @@ const ExamSession = () => {
 
     fetchData();
   }, [answerSheetId, navigate]);
+
+  const requestFullScreen = useCallback(() => {
+    const element = document.documentElement;
+    isTransitioningFullScreenRef.current = true;
+    
+    const request = 
+      element.requestFullscreen?.() || 
+      element.mozRequestFullScreen?.() || 
+      element.webkitRequestFullscreen?.() || 
+      element.msRequestFullscreen?.();
+
+    if (request && typeof request.finally === 'function') {
+      request.finally(() => {
+        setTimeout(() => {
+          isTransitioningFullScreenRef.current = false;
+        }, 1000);
+      });
+    } else {
+      setTimeout(() => {
+        isTransitioningFullScreenRef.current = false;
+      }, 1000);
+    }
+  }, []);
 
   const handleRefreshQuestions = async () => {
     if (refreshCode !== "maya404") {
@@ -432,19 +464,24 @@ ${questionsList
 Provide your response in the exact format above for ALL questions. Scoring: correct = 2 points, partial = 1 point, incorrect = 0 points. Total score will be calculated automatically.`;
       } else {
         // Fallback for other exam types
-        prompt = `Evaluate the following questions and answers. For EACH question, provide your evaluation in this EXACT format:
+        prompt = `You are evaluating an exam. Evaluate ALL the following questions and answers. For EACH question, provide your evaluation in this EXACT format:
 
 QUESTION 1:
-STATUS: [will execute OR will not execute]
+STATUS: [correct OR partial OR incorrect]
 OVERVIEW: [Brief 1-2 sentence overview]
 EXPLANATION: [Detailed explanation]
+
+QUESTION 2:
+...
 
 Questions and Answers:
 ${questionsList
   .map(
     (q) => `Question ${q.questionNumber}: ${q.question}\nAnswer: ${q.answer}`
   )
-  .join("\n\n")}`;
+  .join("\n\n")}
+
+Provide your response in the exact format above for ALL questions. Your feedback should be constructive and clear.`;
       }
 
       // Single API request for all questions
@@ -551,8 +588,14 @@ ${questionsList
               return sum + evaluation.score;
             }
             // Fallback: if score not provided, use status
-            if (evaluation.status === "will execute") {
+            if (
+              evaluation.status === "will execute" ||
+              evaluation.status === "correct"
+            ) {
               return sum + 33.3;
+            }
+            if (evaluation.status === "partial") {
+              return sum + 15;
             }
             return sum;
           }, 0);
@@ -561,29 +604,18 @@ ${questionsList
           if (finalAiScore > 100) finalAiScore = 100;
           if (finalAiScore < 0) finalAiScore = 0;
         } else {
-          // Fallback for other exam types
-          const executeCount = statuses.filter(
-            (s) => s.status === "will execute"
-          ).length;
-          finalAiScore = Math.round((executeCount / statuses.length) * 100);
-          if (finalAiScore > 100) finalAiScore = 100;
-          if (finalAiScore < 0) finalAiScore = 0;
+          // Default fallback scoring (percentage based)
+          const totalEarned = statuses.reduce((sum, s) => {
+            if (s.status === "correct") return sum + 2;
+            if (s.status === "partial") return sum + 1;
+            return sum;
+          }, 0);
+          finalAiScore = Math.round((totalEarned / (statuses.length * 2)) * 100);
         }
       } else {
-        // If API call fails, set default values
         console.error("AI evaluation failed");
-        for (let i = 0; i < questionsList.length; i++) {
-          statuses.push({
-            questionNumber: i + 1,
-            status:
-              examType === "viva" || examType === "coaviva"
-                ? "incorrect"
-                : "will not execute",
-            overview: "Evaluation failed",
-            explanation: "Unable to evaluate this answer due to an error.",
-          });
-        }
-        finalAiScore = 0;
+        setShowResults(true); 
+        return null;
       }
 
       setAiAnswerStatus(statuses);
@@ -596,7 +628,7 @@ ${questionsList
     } finally {
       setAiEvaluating(false);
     }
-  }, [answerSheet, answers]);
+  }, [answerSheet]);
 
   const handleSubmit = useCallback(async () => {
     // Allow submission even if exam status is "stop" - students can submit after teacher stops exam
@@ -604,23 +636,18 @@ ${questionsList
       let aiScore = null;
 
       let aiEvaluations = [];
-      // if (
-      //   answerSheet?.exam_type === "external" ||
-      //   answerSheet?.exam_type === "viva" ||
-      //   answerSheet?.exam_type === "coaviva"
-      // ) {
-      //   const evaluationResult = await evaluateAnswers();
-      //   if (evaluationResult) {
-      //     aiScore = evaluationResult.score;
-      //     aiEvaluations = evaluationResult.evaluations;
-      //   }
-      // }
+      const evaluationResult = await evaluateAnswers();
+      if (evaluationResult) {
+        aiScore = evaluationResult.score;
+        aiEvaluations = evaluationResult.evaluations;
+      }
 
       const formattedAnswers = answerSheet.data.map((questionObj) => {
         const question = Object.keys(questionObj)[0];
+        const currentAnswers = answersRef.current;
         return {
-          [question]: answers[question]
-            ? answers[question].replace(/\r\n/g, "\n")
+          [question]: currentAnswers[question]
+            ? currentAnswers[question].replace(/\r\n/g, "\n")
             : "",
         };
       });
@@ -649,21 +676,12 @@ ${questionsList
         submit_status: true,
       }));
 
-      if (
-        answerSheet?.exam_type === "viva" ||
-        answerSheet?.exam_type === "external" ||
-        answerSheet?.exam_type === "coaviva"
-      ) {
-        navigate("/student");
-        // setShowResults(true);
-      } else {
-        navigate("/student");
-      }
+      setShowResults(true);
     } catch (error) {
       toast.error(error.message || "Failed to submit exam");
       setLoading(false);
     }
-  }, [answerSheet, answers, answerSheetId, evaluateAnswers, navigate]);
+  }, [answerSheet, answerSheetId, evaluateAnswers, navigate]); // Removed answers from dependencies
 
   const markAsCopied = useCallback(() => {
     // Prevent if exam is already submitted
@@ -680,15 +698,17 @@ ${questionsList
     setLocalCopyCount((prev) => {
       const newCopyCount = prev + 1;
 
-      // Open modal immediately - don't wait for API
-      setCopied(true);
-      setShowPasscodeModal(true);
-
       // Show warning based on local counter
       if (newCopyCount >= 4) {
-        toast.error("Maximum copy attempts reached. Submitting exam...");
+        toast.error("Maximum violations reached! Automatically submitting your exam...");
+        // Auto-submit and prevent further interaction
+        setCopied(true);
+        setShowPasscodeModal(false);
         handleSubmit();
       } else {
+        // Open modal for intermediate violations
+        setCopied(true);
+        setShowPasscodeModal(true);
         toast.error(
           `Warning: ${
             4 - newCopyCount
@@ -697,7 +717,6 @@ ${questionsList
       }
 
       // Send API request in background (fire and forget)
-      // Don't wait for response - modal is already open
       fetch(Allapi.assignCopied.url(answerSheetId), {
         method: "PUT",
         headers: {
@@ -718,7 +737,6 @@ ${questionsList
           }));
         })
         .catch((error) => {
-          // Silently handle error - modal is already open, detection continues
           console.error("Error marking as copied (background):", error);
         });
 
@@ -746,6 +764,9 @@ ${questionsList
 
   useEffect(() => {
     const handleVisibilityChange = () => {
+      // Ignore during full-screen transition
+      if (isTransitioningFullScreenRef.current) return;
+
       // Keep detection active even if copied is true - only check if exam is submitted
       if (document.hidden && !answerSheet?.submit_status) {
         markAsCopied();
@@ -753,6 +774,9 @@ ${questionsList
     };
 
     const handleBlur = () => {
+      // Ignore during full-screen transition
+      if (isTransitioningFullScreenRef.current) return;
+
       // Detect when window loses focus (Alt+Tab, clicking away, etc.)
       if (!answerSheet?.submit_status) {
         // Small delay to avoid false positives from legitimate clicks within the page
@@ -770,15 +794,16 @@ ${questionsList
     };
 
     const handleResize = () => {
-      // Keep detection active even if copied is true
-      if (!answerSheet?.submit_status) {
+      // Ignore resize during full-screen transition
+      if (isTransitioningFullScreenRef.current) return;
+
+      if (!document.fullscreenElement && !answerSheet?.submit_status) {
         markAsCopied();
       }
     };
 
     const handleBeforeUnload = (e) => {
-      // Block page reload until exam is submitted (regardless of exam status - start/stop)
-      // Students can submit even after teacher stops the exam, but cannot reload until submitted
+      // Block page reload until exam is submitted
       if (!answerSheet?.submit_status) {
         e.preventDefault();
         markAsCopied();
@@ -800,76 +825,31 @@ ${questionsList
         return;
       }
 
+      // Detect reload (F5)
+      if (e.key === "F5" || (e.ctrlKey && e.key === "r")) {
+        e.preventDefault();
+        markAsCopied();
+        return;
+      }
+
       // Detect tab/window switching shortcuts
-      // Ctrl+Tab, Ctrl+Shift+Tab (browser tab switching)
       if ((e.ctrlKey || e.metaKey) && e.key === "Tab") {
         markAsCopied();
         return;
       }
+    };
 
-      // Ctrl+Shift+Tab (previous tab in browser)
-      if (e.ctrlKey && e.shiftKey && e.key === "Tab") {
+    const handleFullScreenChange = () => {
+      if (isTransitioningFullScreenRef.current) return;
+      
+      if (!document.fullscreenElement && !answerSheet?.submit_status) {
         markAsCopied();
-        return;
       }
+    };
 
-      // Alt+Tab, Alt+Shift+Tab (OS window switching)
-      if (e.altKey && e.key === "Tab") {
-        markAsCopied();
-        return;
-      }
-
-      // Win+Tab (Windows task view) - Windows key + Tab
-      // On Windows, this is usually detected via blur/visibilitychange, but we catch it here too
-      if (e.metaKey && e.key === "Tab") {
-        markAsCopied();
-        return;
-      }
-
-      // Ctrl+Shift+N (incognito/private window)
-      if (e.ctrlKey && e.shiftKey && (e.key === "n" || e.key === "N")) {
-        markAsCopied();
-        return;
-      }
-
-      // Ctrl+Shift+P (private window in Firefox)
-      if (e.ctrlKey && e.shiftKey && (e.key === "p" || e.key === "P")) {
-        markAsCopied();
-        return;
-      }
-
-      // PageUp/PageDown with Ctrl (sometimes used for tab switching)
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        (e.key === "PageUp" || e.key === "PageDown")
-      ) {
-        markAsCopied();
-        return;
-      }
-
-      // Detect new tab, close tab shortcuts
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        (e.key === "t" || e.key === "w" || e.key === "n" || e.key === "T")
-      ) {
-        markAsCopied();
-        return;
-      }
-
-      // Detect refresh shortcuts
-      if (
-        e.key === "F5" ||
-        ((e.ctrlKey || e.metaKey) && e.key === "r") ||
-        ((e.ctrlKey || e.metaKey) && e.key === "R")
-      ) {
-        markAsCopied();
-        return;
-      }
-
-      // Detect Alt+F4 (close window)
-      if (e.altKey && e.key === "F4") {
-        markAsCopied();
-        return;
+    const handleInteraction = () => {
+      if (!document.fullscreenElement && !answerSheet?.submit_status) {
+        requestFullScreen();
       }
     };
 
@@ -878,7 +858,14 @@ ${questionsList
     window.addEventListener("focus", handleFocus);
     window.addEventListener("resize", handleResize);
     window.addEventListener("beforeunload", handleBeforeUnload);
-    document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("fullscreenchange", handleFullScreenChange);
+    document.addEventListener("click", handleInteraction);
+
+    // Try to request fullscreen immediately
+    if (!answerSheet?.submit_status) {
+      requestFullScreen();
+    }
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
@@ -886,9 +873,12 @@ ${questionsList
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("fullscreenchange", handleFullScreenChange);
+      document.removeEventListener("click", handleInteraction);
     };
-  }, [answerSheet, markAsCopied]); // Include markAsCopied in dependencies
+  }, [answerSheet, markAsCopied, requestFullScreen]);
+
 
   // Handle browser back button with passcode protection
   useEffect(() => {
@@ -942,18 +932,6 @@ ${questionsList
 
       // Reset local state - detection continues even after reset
       setCopied(false);
-
-      // For viva exams, don't clear answers in the last 5 minutes (300 seconds)
-      const isViva =
-        answerSheet?.exam_type === "viva" ||
-        answerSheet?.exam_type === "coaviva";
-      const isLast5Minutes = timeLeft !== null && timeLeft <= 300;
-
-      if (!isViva || !isLast5Minutes) {
-        setAnswers({});
-      } else {
-        toast.info("Answers preserved in the last 5 minutes");
-      }
 
       setShowPasscodeModal(false);
       setPasscode("");
@@ -1013,64 +991,106 @@ ${questionsList
     );
   }
 
-  if (showResults && answerSheet?.exam_type !== "internal") {
+  if (showResults) {
     return (
       <div className="min-h-screen bg-gray-900 p-8">
-        <div className="max-w-2xl mx-auto bg-gray-800 rounded-xl p-8">
-          <h2 className="text-3xl font-bold text-white mb-8 text-center">
+        <div className="max-w-4xl mx-auto bg-gray-800 rounded-xl p-8 border border-blue-500/20">
+          <h2 className="text-3xl font-bold text-white mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
             Exam Results
           </h2>
 
-          <div className="mb-8">
+          <div className="mb-10 bg-gray-900/50 rounded-2xl p-6 border border-blue-500/10">
             <div className="text-6xl font-bold text-blue-500 text-center mb-4">
-              {aiScore !== null ? aiScore : 0}
-              {answerSheet?.exam_type === "external" && (
-                <span className="text-3xl text-gray-400"> / 100</span>
-              )}
-              {answerSheet?.exam_type === "viva" && (
-                <span className="text-3xl text-gray-400"> / 20</span>
-              )}
-              {answerSheet?.exam_type === "coaviva" && (
-                <span className="text-3xl text-gray-400"> / 20</span>
+              {aiScore !== null ? (
+                <>
+                  {aiScore}
+                  {answerSheet?.exam_type === "viva" ||
+                  answerSheet?.exam_type === "coaviva" ? (
+                    <span className="text-3xl text-gray-400"> / 20</span>
+                  ) : (
+                    <span className="text-3xl text-gray-400"> / 100</span>
+                  )}
+                </>
+              ) : (
+                <span className="text-xl text-gray-400 italic">
+                  Drafting Submission...
+                </span>
               )}
             </div>
-            <p className="text-xl text-gray-400 text-center">
-              Your AI-Generated Score
-            </p>
+            {aiScore !== null && (
+              <p className="text-xl text-gray-400 text-center font-medium">
+                Overall AI Score
+              </p>
+            )}
           </div>
-          {answerSheet?.exam_type === "external" && (
-            <div className="space-y-4 mb-8">
-              <h3 className="text-xl font-semibold text-white mb-4">
-                Answer Status:
-              </h3>
-              {aiAnswerStatus.map((status, index) => (
+
+          <div className="space-y-6 mb-8 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+              <Brain className="w-6 h-6 text-blue-400" />
+              Detailed Review:
+            </h3>
+            {questions.map((q, index) => {
+              const aiEval = aiAnswerStatus.find(
+                (status) => status.questionNumber === index + 1
+              );
+              return (
                 <div
                   key={index}
-                  className="flex items-center justify-between bg-gray-700 p-4 rounded-lg"
+                  className="bg-gray-900/50 rounded-xl p-6 border border-gray-700/50 hover:border-blue-500/30 transition-all duration-300"
                 >
-                  <span className="text-white">
-                    Question {status.questionNumber}
-                  </span>
-                  <span
-                    className={
-                      status.status === "will execute"
-                        ? "text-green-400"
-                        : "text-red-400"
-                    }
-                  >
-                    {status.status}
-                  </span>
+                  <div className="flex justify-between items-start mb-4">
+                    <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full text-sm font-medium">
+                      Question {index + 1}
+                    </span>
+                    {aiEval && (
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-bold ${
+                          aiEval.status === "will execute" ||
+                          aiEval.status === "correct"
+                            ? "bg-green-500/10 text-green-400"
+                            : aiEval.status === "partial"
+                            ? "bg-yellow-500/10 text-yellow-400"
+                            : "bg-red-500/10 text-red-400"
+                        }`}
+                      >
+                        {aiEval.status.toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-white font-medium mb-4 leading-relaxed">
+                    {q}
+                  </p>
+                  <div className="bg-gray-800 rounded-lg p-4 border-l-4 border-blue-500/50">
+                    <p className="text-xs text-gray-400 uppercase tracking-wider mb-2 font-bold">
+                      Your Answer:
+                    </p>
+                    <pre className="text-gray-300 whitespace-pre-wrap font-mono text-sm">
+                      {answers[q] || "No answer provided"}
+                    </pre>
+                  </div>
+                  {aiEval && aiEval.explanation && (
+                    <div className="mt-4 pt-4 border-t border-gray-700/50">
+                      <p className="text-xs text-blue-400 uppercase tracking-wider mb-2 font-bold">
+                        AI Feedback:
+                      </p>
+                      <p className="text-gray-400 text-sm italic leading-relaxed">
+                        {aiEval.explanation}
+                      </p>
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
+              );
+            })}
+          </div>
 
-          <button
-            onClick={() => navigate("/student")}
-            className="w-full px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-300"
-          >
-            Back to Home
-          </button>
+          <div className="flex gap-4">
+            <button
+              onClick={() => navigate("/student")}
+              className="flex-1 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all duration-300"
+            >
+              Back to Dashboard
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -1127,44 +1147,47 @@ ${questionsList
           <p className="text-gray-400 mb-2">
             You have been marked for copying.
           </p>
-          <p className="text-yellow-400 mb-6">
-            {remainingChances} {remainingChances === 1 ? "chance" : "chances"}{" "}
-            remaining before automatic submission
-          </p>
-          <div className="space-y-4">
-            <input
-              type="password"
-              value={passcode}
-              onChange={(e) => setPasscode(e.target.value)}
-              placeholder="Enter passcode"
-              autoComplete="off"
-              spellCheck="false"
-              data-form-type="other"
-              data-lpignore="true"
-              data-1p-ignore="true"
-              data-dashlane-ignore="true"
-              data-bitwarden-watching="false"
-              name="passcode-field"
-              id="passcode-field"
-              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
-            />
-            <button
-              onClick={handleRemoveCopied}
-              className="w-full px-6 py-3 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-all duration-300"
-            >
-              {copyLoading ? "Submitting..." : "Submit Passcode"}
-            </button>
-          </div>
+          {remainingChances > 0 ? (
+            <p className="text-yellow-400 mb-6">
+              {remainingChances} {remainingChances === 1 ? "chance" : "chances"}{" "}
+              remaining before automatic submission
+            </p>
+          ) : (
+            <p className="text-red-400 font-bold mb-6 italic animate-pulse">
+              Final violation reached! Submitting exam...
+            </p>
+          )}
+          {remainingChances > 0 && (
+            <div className="space-y-4">
+              <input
+                type="password"
+                value={passcode}
+                onChange={(e) => setPasscode(e.target.value)}
+                placeholder="Enter passcode"
+                autoComplete="off"
+                spellCheck="false"
+                data-form-type="other"
+                data-lpignore="true"
+                data-1p-ignore="true"
+                data-dashlane-ignore="true"
+                data-bitwarden-watching="false"
+                name="passcode-field"
+                id="passcode-field"
+                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              />
+              <button
+                onClick={handleRemoveCopied}
+                className="w-full px-6 py-3 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-all duration-300"
+              >
+                {copyLoading ? "Submitting..." : "Submit Passcode"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
-  // Extract questions from answerSheet.data
-  const questions = answerSheet.data
-    ? answerSheet.data.map((answer) => Object.keys(answer)[0])
-    : [];
-  const currentQuestion = questions[activeQuestionIndex];
 
   return (
     <div
@@ -1273,10 +1296,14 @@ ${questionsList
                     theme={dracula}
                     extensions={[javascript()]}
                     onChange={(value) => {
-                      setAnswers((prev) => ({
-                        ...prev,
-                        [currentQuestion]: value,
-                      }));
+                      setAnswers((prev) => {
+                        const newAnswers = {
+                          ...prev,
+                          [currentQuestion]: value,
+                        };
+                        answersRef.current = newAnswers;
+                        return newAnswers;
+                      })
                     }}
                     style={{ height: "100%", scrollbarWidth: "none" }}
                     className="hide-scrollbar"
@@ -1357,10 +1384,14 @@ ${questionsList
                     <textarea
                       value={answers[question] || ""}
                       onChange={(e) =>
-                        setAnswers((prev) => ({
-                          ...prev,
-                          [question]: e.target.value,
-                        }))
+                        setAnswers((prev) => {
+                          const newAnswers = {
+                            ...prev,
+                            [question]: e.target.value,
+                          };
+                          answersRef.current = newAnswers;
+                          return newAnswers;
+                        })
                       }
                       className="w-full h-32 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
                       placeholder="Enter your answer..."
