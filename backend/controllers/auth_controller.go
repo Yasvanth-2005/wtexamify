@@ -130,16 +130,28 @@ func GoogleCallback(c *gin.Context) {
 	// 	role = "student"
 	// }
 
-	// Determine role based on email domain
-	isTeacher := true
-	if strings.HasSuffix(email, "@rguktn.ac.in") {
-		isTeacher = false
+	// Check if email is in teacher/admin whitelist
+	isAllowedTeacher := false
+	for _, allowedEmail := range allowedTeacherEmails {
+		if email == allowedEmail {
+			isAllowedTeacher = true
+			break
+		}
 	}
 
-	// Assign role
-	role := "teacher"
-	if !isTeacher {
+	// Determine role
+	role := "student"
+	if isAllowedTeacher {
+		role = "teacher"
+	} else if strings.HasSuffix(email, "@rguktn.ac.in") {
 		role = "student"
+	} else {
+		// Not a teacher and not a student-domain email
+		// For now we assume they are a blocked user or we assign a default role
+		// But based on the user's flow, we allow the login but check in frontend
+		// Actually, let's be strict:
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied. Your email is not authorized."})
+		return
 	}
 
 	var user models.User
