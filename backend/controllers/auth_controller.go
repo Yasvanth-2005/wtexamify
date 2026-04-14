@@ -165,7 +165,7 @@ func GoogleCallback(c *gin.Context) {
 				QuestionPapers: []struct {
 					ExamID        primitive.ObjectID `bson:"exam_id" json:"exam_id"`
 					AnswerSheetID primitive.ObjectID `bson:"answer_sheet_id" json:"answer_sheet_id"`
-					Copied        bool               `bson:"copied" json:"copied"`
+					Copied        bool               `bson:"copied" json:"copied"`	
 				}{},
 			}
 			studentContainerCollection.InsertOne(context.TODO(), studentContainer)
