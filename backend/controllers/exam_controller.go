@@ -390,6 +390,7 @@ func SendEmails(c *gin.Context) {
 	// Email Subject & Body
 	subject := "Lab Exam Invitation"
 	link := "https://labexamsrgukt.vercel.app"
+	// link := "https://labexamsrgukt.vercel.app"
 	bodyTemplate := `
 		<html>
 			<body style="font-family: Arial, sans-serif; text-align: center;">
